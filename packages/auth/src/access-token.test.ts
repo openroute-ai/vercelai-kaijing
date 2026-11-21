@@ -17,7 +17,7 @@ test("缺少 referenceId 时拒绝签发 org_id", () => {
 test("customAccessTokenClaims 写入恰好一个 org_id", () => {
   const claims = buildAccessTokenClaims({
     referenceId: "org_a",
-    scopes: ["openshop:read"],
+    scopes: ["kaijing:account.read"],
   })
   assert.deepEqual(claims, { org_id: "org_a" })
 })

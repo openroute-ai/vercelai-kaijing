@@ -1,6 +1,6 @@
 /**
- * Shop 专用 OAuth Provider 配置。不要加入 sharedAuthOptions（apps/web 不得启用）。
- * @see docs/design/open-shop-desktop-mcp-upgrade-2026-11-12.md §6 / §14
+ * 桌面端登录薄云用的 OAuth Provider 配置。
+ * 不要放进 sharedAuthOptions：apps/web 控制台走自己的 better-auth 实例。
  */
 import { jwt, type JwtOptions } from "better-auth/plugins"
 import {
@@ -83,7 +83,7 @@ export function createShopOAuthProviderOptions(
     resources: [
       {
         identifier: options.mcpResource,
-        name: "Open Shop MCP",
+        name: "开镜",
         allowedScopes: [...OPENSHOP_ISSUABLE_SCOPES],
         accessTokenTtl: options.accessTokenExpiresIn ?? DEFAULT_ACCESS_TOKEN_EXPIRES_IN,
       },

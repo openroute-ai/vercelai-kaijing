@@ -8,13 +8,12 @@ import { Routes } from "../routes";
  */
 export const websiteConfig = {
   metadata: {
-    title: 'Cloud CRM',
-    authorName: 'Cloud CRM',
-    icpNumber: '京ICP备2026001997号-1',
-    gonganIcpNumber: '京公网安备11010502059490号',
-    description:
-      'Cloud CRM 是一个用于构建和部署 AI 应用的云端CRM平台。',
-    base_url: 'https://crm.suanlene.cn:3000',
+    title: '开镜',
+    authorName: '开镜',
+    icpNumber: '',
+    gonganIcpNumber: '',
+    description: '开镜是开源的 AI 短剧 / 漫剧制作工具。一期是桌面客户端加薄云控制面。',
+    base_url: 'https://vercelai.cn',
     theme: {
       defaultTheme: 'default',
       enableSwitch: false,
@@ -30,11 +29,11 @@ export const websiteConfig = {
       logoDark: '/logo-dark.png',
     },
     social: {
-      wechatId: 'qijianbin001',
-      phoneNumber: '13681332236',
-      email: 'service@gongjiyun.com',
-      address: '北京市海淀区东升大厦A座608',
-      websiteUrl: 'https://www.suanlene.cn',
+      wechatId: '',
+      phoneNumber: '',
+      email: 'hello@vercelai.cn',
+      address: '',
+      websiteUrl: 'https://vercelai.cn',
       github: '',
       twitter: '',
       blueSky: '',
@@ -61,13 +60,13 @@ export const websiteConfig = {
     enableSpeedInsights: false,
   },
   auth: {
-    emailSuffix: 'gongjiyun.com', // 邮箱后缀
-    cookieDomain: process.env.NODE_ENV === 'production' ? '.suanlene.cn' : undefined,
+    emailSuffix: 'vercelai.cn',
+    cookieDomain: process.env.NODE_ENV === 'production' ? '.vercelai.cn' : undefined,
     cookiePrefix: 'web',
     trustedOrigins:
       process.env.NODE_ENV === 'production'
-        ? ['https://crm.suanlene.cn', 'https://suanlene.cn']
-        : undefined, // 信任的来源列表，允许跨域请求
+        ? ['https://vercelai.cn', 'https://www.vercelai.cn']
+        : undefined,
     allowPublicSignUp: false,
     allowPhoneSignUp: false,
     loginMethods: ['email', 'phone'] as const,

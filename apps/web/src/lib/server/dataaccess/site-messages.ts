@@ -52,47 +52,39 @@ function mapDetail(row: SiteMessageDetailRow): SiteMessageDetail {
 
 const demoMessages: Omit<NewWebUserSiteMessage, 'id' | 'userId'>[] = [
   {
-    title: '新的入驻申请待审核',
-    summary: '有 2 家新租户提交了 Daraz 斯里兰卡站入驻申请，请尽快完成资质审核。',
-    content: `平台收到 **2 家新租户** 的入驻申请，当前均处于「待审核」状态。
+    title: '欢迎使用开镜控制台',
+    summary: '薄云目前只管理账户、积分和生成任务元数据。',
+    content: `开镜一期的云端不托管完整短剧项目。
 
-- 科伦坡优选贸易（Colombo Select）
-- 锡兰家居供应链（Ceylon Home Supply）
+- 登录与邀请在这个控制台
+- 积分账户和流水见「积分」
+- 生成任务状态见「生成任务」
 
-请核对营业执照、Daraz 店铺授权与联系人信息后再通过审核。`,
-    category: '入驻',
-    links: [{ label: '前往入驻审核', href: '/console/onboarding' }],
+工作台本身在桌面客户端里打开。`,
+    category: '系统',
+    links: [{ label: '打开总览', href: '/console' }],
     read: false,
     createdAt: new Date('2026-11-10T03:20:00.000Z'),
   },
   {
-    title: '店铺同步任务出现异常',
-    summary: '3 个店铺的订单同步任务连续失败，已自动进入重试队列。',
-    content: `同步监控发现以下店铺的订单同步连续失败：
+    title: '生成网关还是占位',
+    summary: '提交到 /api/v1/generations 的任务会记成 queued，不会调用供应商。',
+    content: `M0 的供应商适配器只保留接口。
 
-- Lanka Digital Store：连续失败 3 次
-- Kandy Fashion Hub：连续失败 2 次
-- Galle Grocery Mart：连续失败 2 次
-
-系统已自动加入重试队列。若 30 分钟内仍未恢复，请检查平台授权凭证或稍后手动触发同步。`,
-    category: '同步',
-    links: [{ label: '查看同步健康', href: '/console/sync-health' }],
+桌面端以后把生图、生视频请求交给这个网关，由平台代持密钥并扣积分。`,
+    category: '生成',
+    links: [{ label: '查看生成任务', href: '/console/generation-jobs' }],
     read: false,
     createdAt: new Date('2026-11-09T14:05:00.000Z'),
   },
   {
-    title: '平台运营周报已生成',
-    summary: '第 45 周运营周报已生成，包含租户增长、店铺健康度与待审动作汇总。',
-    content: `第 **45 周** 平台运营周报已生成。
+    title: '用量摘要还是空的',
+    summary: '积分和生成任务都还没有真实数据。',
+    content: `控制台里的积分账户和生成任务列表可以为空。
 
-- 新增租户：4 家
-- 新增店铺：7 个
-- 待审动作：12 条
-- 同步健康率：96.4%
-
-可在运营总览中查看完整指标趋势。`,
+这不是故障。充值、预扣和供应商回调会在后续里程碑接上。`,
     category: '系统',
-    links: [{ label: '打开运营总览', href: '/console' }],
+    links: [{ label: '打开总览', href: '/console' }],
     read: true,
     readAt: new Date('2026-11-08T09:30:00.000Z'),
     createdAt: new Date('2026-11-08T09:00:00.000Z'),

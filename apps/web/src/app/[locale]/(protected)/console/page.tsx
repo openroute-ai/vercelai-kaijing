@@ -1,8 +1,7 @@
 'use client'
 
-import { PageDataLoading } from '@/components/shared/data-table'
 import { trpc } from '@/lib/trpc/client'
-import { Button } from '@workspace/ui/components/button'
+import { LocaleLink } from '@/lib/i18n/navigation'
 import {
   Card,
   CardContent,
@@ -10,57 +9,58 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 
-const CARDS = [
-  { key: 'tenants', label: '租户数' },
-  { key: 'activeShops', label: '活跃店铺' },
-  { key: 'pendingActions', label: '待审动作' },
-  { key: 'syncErrors', label: '同步错误' },
-  { key: 'ordersToday', label: '今日订单' },
-  { key: 'candidatesNew', label: '新选品候选' },
-] as const
+export default function CloudOverviewPage() {
+  const accounts = trpc.credits.listAccounts.useQuery({ page: 1, pageSize: 1 })
+  const jobs = trpc.generationJobs.list.useQuery({ page: 1, pageSize: 1 })
 
-export default function CrossborderDashboardPage() {
-  const query = trpc.platformOps.dashboardStats.useQuery()
+  const cards = [
+    {
+      key: 'accounts',
+      label: '积分账户',
+      value: accounts.data?.total,
+      href: '/console/credits',
+      error: accounts.error?.message,
+    },
+    {
+      key: 'jobs',
+      label: '生成任务',
+      value: jobs.data?.total,
+      href: '/console/generation-jobs',
+      error: jobs.error?.message,
+    },
+  ]
 
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-medium">运营概览</h2>
-        <p className="text-sm text-muted-foreground">
-          平台库实时统计：租户 / 活跃店铺 / 待审动作 / 同步错误 / 新选品候选为当前计数；今日订单按下单时间（UTC
-          自然日）统计。
+        <h2 className="text-lg font-medium">薄云总览</h2>
+        <p className="text-muted-foreground text-sm">
+          开镜一期的云端只保存账户、积分和生成任务元数据。短剧项目、画布和成片留在桌面客户端。
         </p>
       </div>
-
-      {query.isLoading ? (
-        <PageDataLoading />
-      ) : query.isError ? (
-        <div className="space-y-2 rounded-lg border p-4">
-          <p className="text-sm text-destructive">
-            统计数据加载失败：{query.error.message}
-          </p>
-          <Button size="sm" variant="outline" onClick={() => query.refetch()}>
-            重试
-          </Button>
-        </div>
-      ) : query.data ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {CARDS.map((card) => (
-            <Card key={card.key}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-muted-foreground text-sm font-medium">
-                  {card.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-semibold tabular-nums">
-                  {query.data[card.key]}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {cards.map((card) => (
+          <Card key={card.key}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-muted-foreground text-sm font-medium">
+                {card.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-3xl font-semibold tabular-nums">
+                {card.error ? '—' : (card.value ?? '…')}
+              </p>
+              {card.error ? (
+                <p className="text-destructive text-sm">{card.error}</p>
+              ) : (
+                <LocaleLink className="text-sm underline" href={card.href}>
+                  查看列表
+                </LocaleLink>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

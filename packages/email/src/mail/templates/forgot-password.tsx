@@ -29,7 +29,7 @@ export function ForgotPassword({ url, name, locale, messages }: ForgotPasswordPr
 ForgotPassword.PreviewProps = {
   locale: previewDefaultLocale,
   messages: previewMessages,
-  url: 'https://www.gongjiyun.com',
+  url: 'https://vercelai.cn',
   name: 'username',
 }
 

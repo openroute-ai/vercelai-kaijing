@@ -54,10 +54,10 @@ describe('platform invitation status', () => {
 
 describe('bind invitation email after phone signup', () => {
   it('binds a real email onto a synthetic phone email for the same user', () => {
-    assert.equal(isSyntheticPhoneEmail('13800138000@gongjiyun.com', '13800138000'), true)
+    assert.equal(isSyntheticPhoneEmail('13800138000@vercelai.cn', '13800138000'), true)
     assert.equal(
       shouldBindInvitationEmail({
-        userEmail: '13800138000@gongjiyun.com',
+        userEmail: '13800138000@vercelai.cn',
         userPhone: '13800138000',
         invitationEmail: 'ops@example.com',
       }),
@@ -79,7 +79,7 @@ describe('bind invitation email after phone signup', () => {
   it('does nothing when the invitation has no email or already matches', () => {
     assert.equal(
       shouldBindInvitationEmail({
-        userEmail: '13800138000@gongjiyun.com',
+        userEmail: '13800138000@vercelai.cn',
         userPhone: '13800138000',
         invitationEmail: '',
       }),

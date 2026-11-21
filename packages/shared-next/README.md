@@ -7,7 +7,7 @@
 | 项 | 说明 |
 | --- | --- |
 | 作用 | 抽出多个 Next.js 应用都会用到、但与具体业务无关的代码 |
-| 消费方 | `apps/shop`、`apps/web` 等 Next.js 应用 |
+| 消费方 | `apps/web`、`apps/docs` 等 Next.js 应用 |
 | 边界 | 只依赖 `@workspace/ui` 一类基础包，不引用 `apps/*` |
 
 ## 主要内容

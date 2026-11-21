@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "@gongji-crm-web",
+      "name": "kaijing-web",
       "script": "apps/web/server.js",
       "exec_mode": "cluster",
       "instances": 1

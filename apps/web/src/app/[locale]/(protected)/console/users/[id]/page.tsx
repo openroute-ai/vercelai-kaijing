@@ -4,44 +4,20 @@ import * as React from 'react'
 import { DetailBackButton } from '@/components/console/detail-back-button'
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog'
 import { ConfirmReasonDialog } from '@/components/shared/confirm-reason-dialog'
-import {
-  PageDataLoading,
-  TableEmptyRow,
-  TableErrorRow,
-  TableLoadingRow,
-} from '@/components/shared/data-table'
-import { ListPagination } from '@/components/shared/list-pagination'
+import { PageDataLoading } from '@/components/shared/data-table'
 import { formatOpsTime } from '@/lib/console/format-time'
-import { LocaleLink } from '@/lib/i18n/navigation'
-import { useListPagination } from '@/lib/pagination/use-list-pagination'
 import { trpc } from '@/lib/trpc/client'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Textarea } from '@workspace/ui/components/textarea'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
-
 const ROLE_LABELS: Record<string, string> = {
-  tenant_owner: '租户所有者',
-  tenant_admin: '租户管理员',
-  tenant_engineer: '租户工程师',
-  tenant_viewer: '租户查看者',
+  tenant_owner: '组织所有者',
+  tenant_admin: '组织管理员',
+  tenant_engineer: '组织工程师',
+  tenant_viewer: '组织查看者',
   owner: '所有者',
   admin: '管理员',
   member: '成员',
-}
-
-const APPLICATION_STATUS_LABELS: Record<string, string> = {
-  draft: '草稿',
-  submitted: '待审核',
-  approved: '已通过',
-  rejected: '已驳回',
 }
 
 export default function PlatformUserDetailPage({
@@ -56,18 +32,10 @@ export default function PlatformUserDetailPage({
   const [notice, setNotice] = React.useState('')
   const [banOpen, setBanOpen] = React.useState(false)
   const [unbanOpen, setUnbanOpen] = React.useState(false)
-  const auditPager = useListPagination()
-  const audit = trpc.platformOnboarding.listAuditEvents.useQuery({
-    actorUserId: id,
-    page: auditPager.page,
-    pageSize: auditPager.pageSize,
-  })
 
   const ban = trpc.platformUsers.ban.useMutation({
     onSuccess: async (result) => {
-      setNotice(
-        `用户已封禁，已通知 ${result.organizations} 个所属组织并写审计。`,
-      )
+      setNotice(`用户已封禁。关联组织 ${result.organizations} 个。`)
       setBanOpen(false)
       await utils.platformUsers.get.invalidate({ id })
       await utils.platformUsers.list.invalidate()
@@ -141,15 +109,7 @@ export default function PlatformUserDetailPage({
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
               >
                 <div>
-                  <span className="font-medium">
-                    {membership.orgType === 'tenant' ? (
-                      <LocaleLink className="underline" href={`/console/tenants/${membership.organizationId}`}>
-                        {membership.organizationName}
-                      </LocaleLink>
-                    ) : (
-                      membership.organizationName
-                    )}
-                  </span>
+                  <span className="font-medium">{membership.organizationName}</span>
                   <span className="text-muted-foreground">
                     {' '}
                     {ROLE_LABELS[membership.role] ?? membership.role}
@@ -157,33 +117,10 @@ export default function PlatformUserDetailPage({
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {membership.orgType === 'tenant' ? (
-                    <>
-                      <Badge variant={membership.entryApproved ? 'default' : 'secondary'}>
-                        {membership.entryApproved ? '入驻已通过' : '入驻未通过'}
-                      </Badge>
-                      {membership.applicationStatus ? (
-                        membership.applicationId ? (
-                          <LocaleLink href={`/console/onboarding/${membership.applicationId}`}>
-                            <Badge variant="outline">
-                              入驻申请：
-                              {APPLICATION_STATUS_LABELS[membership.applicationStatus] ??
-                                membership.applicationStatus}
-                            </Badge>
-                          </LocaleLink>
-                        ) : (
-                          <Badge variant="outline">
-                            入驻申请：
-                            {APPLICATION_STATUS_LABELS[membership.applicationStatus] ??
-                              membership.applicationStatus}
-                          </Badge>
-                        )
-                      ) : null}
-                      <Badge variant="outline">{membership.shopCount} 店铺</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline">{membership.orgType}</Badge>
-                  )}
+                  <Badge variant="outline">{membership.orgType}</Badge>
+                  <Badge variant={membership.entryApproved ? 'default' : 'secondary'}>
+                    {membership.entryApproved ? '已启用' : '未启用'}
+                  </Badge>
                 </div>
               </div>
             ))}
@@ -218,12 +155,12 @@ export default function PlatformUserDetailPage({
         <section className="space-y-3 rounded-lg border p-4">
           <h3 className="font-medium">风控操作</h3>
           <p className="text-sm text-muted-foreground">
-            封禁后用户立即退出所有会话且无法登录；所属租户组织将收到站内信通知。
+            封禁后用户立即退出所有会话且无法登录。
           </p>
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="封禁原因（必填，租户可见）"
+            placeholder="封禁原因（必填）"
           />
           <Button
             variant="destructive"
@@ -240,51 +177,6 @@ export default function PlatformUserDetailPage({
           </Button>
         </section>
       )}
-
-      <section className="space-y-3">
-        <h3 className="font-medium">相关平台操作</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>时间</TableHead>
-              <TableHead>操作者</TableHead>
-              <TableHead>动作</TableHead>
-              <TableHead>对象</TableHead>
-              <TableHead>结果</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {audit.isLoading ? (
-              <TableLoadingRow colSpan={5} />
-            ) : audit.isError ? (
-              <TableErrorRow colSpan={5} message={audit.error.message} onRetry={() => audit.refetch()} />
-            ) : audit.data?.items.length ? (
-              audit.data.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="text-xs">{formatOpsTime(item.createdAt)}</TableCell>
-                  <TableCell>{item.actor?.name || item.actorLabel || item.actorUserId || '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{item.action}</TableCell>
-                  <TableCell className="text-xs">
-                    {item.entityType}
-                    {item.entityId ? ` / ${item.entityId}` : ''}
-                  </TableCell>
-                  <TableCell>{item.result || '—'}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableEmptyRow colSpan={5}>暂无相关平台审计。</TableEmptyRow>
-            )}
-          </TableBody>
-        </Table>
-        <ListPagination
-          page={auditPager.page}
-          totalPages={Math.max(1, Math.ceil((audit.data?.total ?? 0) / auditPager.pageSize))}
-          totalItems={audit.data?.total ?? 0}
-          pageSize={auditPager.pageSize}
-          onPageChange={auditPager.setPage}
-          onPageSizeChange={auditPager.setPageSize}
-        />
-      </section>
 
       {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
 
@@ -304,7 +196,7 @@ export default function PlatformUserDetailPage({
         description={`确认封禁用户「${user.name || user.email}」？封禁后该用户将立即退出并无法登录。`}
         confirmLabel="确认封禁"
         confirmVariant="destructive"
-        placeholder="封禁原因（必填，租户可见）"
+        placeholder="封禁原因（必填）"
         required
         minLength={2}
         defaultReason={reason}

@@ -1,10 +1,10 @@
 {
   "AboutPage": {
     "title": "关于我们",
-    "description": "共绩科技（北京）科技有限公司",
-    "authorName": "共绩科技（北京）科技有限公司",
+    "description": "开镜 · AI 短剧 / 漫剧制作工具",
+    "authorName": "开镜",
     "authorBio": "",
-    "introduction": "👋 **你好，这里是北京共绩科技（北京）科技有限公司！**\n\n",
+    "introduction": "开镜是开源的 AI 短剧 / 漫剧制作工具。一期交付桌面客户端和薄云控制面。\n\n",
     "talkWithMe": "联系我们",
     "followMe": "关注我们",
     "contactWeChat": "微信联系"
@@ -187,9 +187,9 @@
     }
   },
   "Metadata": {
-    "name": "共绩CRM",
-    "title": "共绩CRM",
-    "description": "共绩CRM 是一个用于构建和部署 AI 应用的平台。"
+    "name": "开镜",
+    "title": "开镜",
+    "description": "开镜是开源的 AI 短剧 / 漫剧制作工具。一期是桌面客户端加薄云。"
   },
   "Mail": {
     "common": {

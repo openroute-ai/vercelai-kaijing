@@ -1,10 +1,10 @@
 {
   "AboutPage": {
     "title": "About",
-    "description": "共绩科技 (北京) 科技有限公司",
-    "authorName": "共绩科技 (北京) 科技有限公司",
-    "authorBio": "Digital Marketing Experts in the AI Search Era",
-    "introduction": "👋 **Hello, this is 共绩科技 (Beijing) Technology Co., Ltd.!**\n\nWe are a growth-oriented digital marketing service provider, focusing on breakthroughs in the AI search era. Through industry-customized AI technology, full-scenario optimization capabilities, and sustainable service systems, we help enterprises seize opportunities in the AI-driven information retrieval era.\n\n## 🚀 Our Core Product: GEO Generative Search Engine Optimization\n\nGEO is a marketing system specifically designed for generative AI search, optimizing content semantics and knowledge structure to adapt brand information to AI's recognition and recommendation logic. When users ask relevant questions, your brand will directly become the recommended answer in AI responses.\n\n### Three Core Values:\n- **Smart Exposure**: Allow your content to be directly captured and output by AI, breaking through traditional exposure traffic bottlenecks\n- **Efficient Conversion**: AI-recommended traffic comes with high-intention attributes, with conversion efficiency significantly surpassing traditional SEO and advertising\n- **Sustainable Returns**: Achieve low-cost, high-conversion long-term customer acquisition through systematic layout and dynamic optimization\n\n## 💡 Our Core Advantages\n\n### Technology Leadership\nDeeply mastering AI search algorithms and optimization technology, continuously tracking cutting-edge developments, providing you with the most advanced solutions.\n\n### Deep Customization\nBased on industry characteristics and enterprise needs, tailor-made exclusive marketing strategies to achieve precise growth.\n\n### Full Guarantee\nDedicated team tracks the entire process and is responsible for results, ensuring that every investment yields measurable returns.\n\n## 🛠️ Complete GEO Service System\n\nWe provide full-linkage professional services from strategy to execution, from exposure to conversion:\n\n- **Strategic Insights**: Build user intent maps and keyword systems based on semantic analysis\n- **Content Construction**: Establish AI-friendly content libraries covering user decision-making paths\n- **Authoritative Distribution**: Deploy content on AI platforms and high-credibility media\n- **Conversion Optimization**: Improve website AI recognition and set up efficient lead generation paths\n- **Dynamic Defense & Precision Operations**: Real-time monitoring of competitor dynamics and industry trends\n- **Effect Tracking & Iteration**: Full data monitoring, combining real-time feedback to optimize strategies\n\n## 🎯 Our Mission\n\nSeize the AI search dividend window, allowing more enterprise brands to stand out in generative search. We not only help enterprises quickly enter the AI search track, but are also committed to systematically building brand digital assets, precipitating each content exposure into sustainably reusable brand awareness and search rights.\n\n## 📞 Contact Us\n\nWhether you want to learn about GEO technology or need professional AI search marketing consultation, we look forward to communicating with you. Let's start a new era of brand growth in the AI search era together!\n\n**Choose 共绩科技, choose leading marketing in the AI search era!** 🌟",
+    "description": "Kaijing, an open-source AI short-drama tool",
+    "authorName": "Kaijing",
+    "authorBio": "Desktop client plus a thin cloud for login, credits, and generation.",
+    "introduction": "Kaijing (开镜) is an open-source AI short-drama and comic-drama tool. Phase 1 is a Windows/macOS desktop client and a thin cloud for accounts, credits, and a generation gateway.\n\n",
     "talkWithMe": "Contact Us",
     "followMe": "Follow Us"
   },
@@ -201,9 +201,9 @@
     }
   },
   "Metadata": {
-    "name": "Gongji CRM",
-    "title": "Gongji CRM",
-    "description": "Gongji CRM is a platform for building and deploying AI applications."
+    "name": "Kaijing",
+    "title": "Kaijing",
+    "description": "Kaijing is an open-source AI short-drama tool. Phase 1 ships a desktop client and a thin cloud."
   },
   "Mail": {
     "common": {

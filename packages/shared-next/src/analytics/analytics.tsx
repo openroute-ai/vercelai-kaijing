@@ -13,7 +13,7 @@ import { UmamiAnalytics } from './umami-analytics'
  * 2. only work if the environment variable for the analytics is set
  *
  * docs:
- * https://gongjiyun.com/docs/analytics
+ * Analytics widgets. Disabled outside production.
  */
 export function Analytics() {
   if (process.env.NODE_ENV !== 'production') {

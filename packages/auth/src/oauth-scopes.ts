@@ -1,12 +1,12 @@
 /**
- * Open Shop 授权范围。签发列表不含 `openshop:write.confirm`。
- * @see docs/design/open-shop-desktop-mcp-upgrade-2026-11-12.md §6
+ * 开镜授权范围。签发列表不含确认类写范围。
+ * 常量名仍沿用历史前缀，避免一次性改动认证调用面；实际 scope 字符串已换成 kaijing。
  */
-export const OPENSHOP_READ_SCOPE = "openshop:read"
-export const OPENSHOP_WRITE_PENDING_SCOPE = "openshop:write.pending"
+export const OPENSHOP_READ_SCOPE = "kaijing:account.read"
+export const OPENSHOP_WRITE_PENDING_SCOPE = "kaijing:generation.submit"
 
-/** 仅控制台确认待审使用，不得向任何 OAuth / MCP 客户端签发。 */
-export const OPENSHOP_WRITE_CONFIRM_SCOPE = "openshop:write.confirm"
+/** 仅控制台确认使用，不得向任何 OAuth 客户端签发。 */
+export const OPENSHOP_WRITE_CONFIRM_SCOPE = "kaijing:generation.confirm"
 
 /** 与 @better-auth/oauth-provider DEFAULT_OAUTH_SCOPES 对齐。 */
 export const OPENSHOP_OIDC_SCOPES = ["openid", "profile", "email", "offline_access"] as const
@@ -31,12 +31,12 @@ export const OPENSHOP_SCOPE_LABELS_ZH: Record<
     description: "在你离开后保持授权，以便工作台继续访问本组织。",
   },
   [OPENSHOP_READ_SCOPE]: {
-    title: "读取经营数据",
-    description: "读取本组织的商品、刊登、库存、订单与履约等信息。",
+    title: "读取账户",
+    description: "读取本账号的资料、积分与生成任务状态。",
   },
   [OPENSHOP_WRITE_PENDING_SCOPE]: {
-    title: "提交待审变更",
-    description: "创建改价、库存等待审事项，需运营在控制台确认后才会生效。",
+    title: "提交生成",
+    description: "向统一生成网关提交生图或生视频任务。",
   },
 }
 

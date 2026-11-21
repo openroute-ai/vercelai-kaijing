@@ -54,7 +54,7 @@ test("缺少 org_id 的令牌不能访问", () => {
   assert.equal(denied.ok, false)
 })
 
-test("读工具需要 openshop:read，写工具另需 write.pending", () => {
+test("读范围与写范围互相独立", () => {
   assert.equal(hasRequiredScope([OPENSHOP_READ_SCOPE], OPENSHOP_READ_SCOPE), true)
   assert.equal(hasRequiredScope([OPENSHOP_READ_SCOPE], OPENSHOP_WRITE_PENDING_SCOPE), false)
   assert.equal(

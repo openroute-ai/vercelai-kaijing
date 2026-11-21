@@ -1,0 +1,33 @@
+{
+  "name": "workspace",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "开镜本机工作台 UI（Vite + React）。M0 只有欢迎页和空项目列表。",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5173",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/drama-core": "workspace:*",
+    "@workspace/ui": "workspace:*",
+    "lucide-react": "^1.61.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^9.39.2",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
+  }
+}

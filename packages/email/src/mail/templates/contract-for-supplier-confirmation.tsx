@@ -45,7 +45,7 @@ ContractForSupplierConfirmation.PreviewProps = {
   messages: previewMessages,
   supplierName: '示例供应商',
   contractNo: 'SC202607260001',
-  contractUrl: 'https://supplier.gongjiyun.com/console/contracts/test',
+  contractUrl: 'https://vercelai.cn/console/contracts/test',
   capacitySummary: '2 个机房，共 10 台设备，32 张 H100',
   totalAmount: '¥120,000/月',
 }

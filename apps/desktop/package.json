@@ -1,0 +1,21 @@
+{
+  "name": "desktop",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "开镜 Electron 壳。开发时加载本机工作台（默认 http://127.0.0.1:5173）。",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "electron": "^35.7.5",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3"
+  }
+}

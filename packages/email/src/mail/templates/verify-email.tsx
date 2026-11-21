@@ -29,7 +29,7 @@ export function VerifyEmail({ url, name, locale, messages }: VerifyEmailProps) {
 VerifyEmail.PreviewProps = {
   locale: previewDefaultLocale,
   messages: previewMessages,
-  url: 'https://www.gongjiyun.com',
+  url: 'https://vercelai.cn',
   name: 'username',
 }
 

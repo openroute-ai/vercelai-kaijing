@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# gongji-crm：单 Dockerfile，多 stage / 多 target。
+# 开镜薄云：单 Dockerfile，多 stage / 多 target。
 # 单独镜像：--target 与 --build-arg BUILD_TARGET 须一致（web|docs|api）。
 # 三合一：--target all --build-arg BUILD_TARGET=all
 # 亦可用 docker/docker-compose.build.yml
@@ -21,9 +21,6 @@ ENV BUILD_TARGET=${BUILD_TARGET} \
     BETTER_AUTH_SECRET=01234567890123456789012345678901 \
     BETTER_AUTH_URL=http://127.0.0.1:3000 \
     BETTER_AUTH_TRUSTED_ORIGINS= \
-    LIBLIB_API_KEY=build \
-    LIBLIB_API_SECRET=build \
-    LIBLIB_OPENAPI_BASE_URL=http://127.0.0.1 \
     MISTRAL_API_KEY=build \
     PORT=8080
 
@@ -35,10 +32,10 @@ RUN pnpm install --frozen-lockfile --config.package-import-method=copy
 
 RUN set -eux; \
     case "${BUILD_TARGET}" in \
-        web)  pnpm exec turbo build --filter=dashboard ;; \
+        web)  pnpm exec turbo build --filter=web ;; \
         docs) pnpm exec turbo build --filter=doc ;; \
         api)  pnpm exec turbo build --filter=api ;; \
-        all)  pnpm exec turbo build --filter=dashboard --filter=doc --filter=api ;; \
+        all)  pnpm exec turbo build --filter=web --filter=doc --filter=api ;; \
         *) echo "Unknown BUILD_TARGET=${BUILD_TARGET} (use web|docs|api|all)"; exit 1 ;; \
     esac
 

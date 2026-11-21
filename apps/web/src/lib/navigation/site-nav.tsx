@@ -1,25 +1,13 @@
 import type { ReactNode } from 'react'
 import React from 'react'
 import {
-  Activity,
-  AlertTriangle,
-  BookOpen,
-  CircleAlert,
-  Building2,
-  ClipboardCheck,
-  FileClock,
-  FileSpreadsheet,
-  FolderTree,
+  Clapperboard,
   LayoutDashboard,
-  Library,
   MailPlus,
   Megaphone,
-  Scale,
   ScrollText,
   Settings,
   ShieldCheck,
-  Store,
-  Truck,
   UserRound,
   Users,
   Wallet,
@@ -40,7 +28,7 @@ export type SiteNavGroup = {
 
 export const OVERVIEW_NAV: SiteNavItem[] = [
   {
-    title: '运营总览',
+    title: '薄云总览',
     url: '/console',
     icon: <LayoutDashboard className="size-4" />,
     exact: true,
@@ -49,23 +37,8 @@ export const OVERVIEW_NAV: SiteNavItem[] = [
 
 export const SITE_NAV_GROUPS: SiteNavGroup[] = [
   {
-    title: '租户与店铺',
+    title: '账户',
     items: [
-      {
-        title: '租户',
-        url: '/console/tenants',
-        icon: <Building2 className="size-4" />,
-      },
-      {
-        title: '入驻审核',
-        url: '/console/onboarding',
-        icon: <ClipboardCheck className="size-4" />,
-      },
-      {
-        title: '店铺',
-        url: '/console/shops',
-        icon: <Store className="size-4" />,
-      },
       {
         title: '用户',
         url: '/console/users',
@@ -79,67 +52,17 @@ export const SITE_NAV_GROUPS: SiteNavGroup[] = [
     ],
   },
   {
-    title: '风控与同步',
+    title: '薄云',
     items: [
       {
-        title: '店铺冲突',
-        url: '/console/shop-conflicts',
-        icon: <AlertTriangle className="size-4" />,
-      },
-      {
-        title: '授权异常',
-        url: '/console/auth-exceptions',
-        icon: <CircleAlert className="size-4" />,
-      },
-      {
-        title: '同步健康',
-        url: '/console/sync-health',
-        icon: <Activity className="size-4" />,
-      },
-      {
-        title: '待审动作',
-        url: '/console/pending-actions',
-        icon: <FileClock className="size-4" />,
-      },
-    ],
-  },
-  {
-    title: '数据初始化',
-    items: [
-      {
-        title: '基础资料',
-        url: '/console/platform-basics',
-        icon: <BookOpen className="size-4" />,
-      },
-      {
-        title: '字典目录',
-        url: '/console/dictionaries',
-        icon: <Library className="size-4" />,
-      },
-      {
-        title: '内部品类',
-        url: '/console/categories',
-        icon: <FolderTree className="size-4" />,
-      },
-      {
-        title: '承运商目录',
-        url: '/console/carriers',
-        icon: <Truck className="size-4" />,
-      },
-      {
-        title: '导入模板',
-        url: '/console/import-templates',
-        icon: <FileSpreadsheet className="size-4" />,
-      },
-      {
-        title: '全局税则库',
-        url: '/console/tariffs',
-        icon: <Scale className="size-4" />,
-      },
-      {
-        title: '默认费用模板',
-        url: '/console/fee-templates',
+        title: '积分',
+        url: '/console/credits',
         icon: <Wallet className="size-4" />,
+      },
+      {
+        title: '生成任务',
+        url: '/console/generation-jobs',
+        icon: <Clapperboard className="size-4" />,
       },
     ],
   },
@@ -171,7 +94,7 @@ export const SETTINGS_NAV_GROUPS: SiteNavGroup[] = [
     title: '平台管理',
     items: [
       {
-        title: '平台配置',
+        title: '薄云说明',
         url: '/settings/platform-config',
         icon: <Settings className="size-4" />,
       },

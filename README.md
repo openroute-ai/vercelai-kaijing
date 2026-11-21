@@ -1,110 +1,121 @@
-# Open Shop
+# 开镜（Kaijing）
 
-多租户跨境电商运营数据中枢 monorepo：租户端运营台、平台运营后台、OpenAPI 与文档站。
+开源的 AI 短剧 / 漫剧制作工具。仓库：[openroute-ai/vercelai-kaijing](https://github.com/openroute-ai/vercelai-kaijing)。平台域名：vercelai.cn。
 
-MVP 聚焦 **Daraz 斯里兰卡（LK）**：店铺连接、选品候选、待审队列、商品/刊登、订单、库存、到仓成本与财务粗览。
+一期面向普通用户的交付是 **Windows / macOS 桌面客户端 + 薄云**。薄云只做登录、积分和统一生成网关。完整浏览器工作台放在二期。
 
-## 模块
-
-```text
-apps/
-  shop/    租户端（Next.js 16）— 营销页、登录注册、/console 运营工作台
-  web/     平台运营后台（Next.js 16 + tRPC）— 跨租户审核、同步健康、待审抽检
-  api/     OpenAPI（Hono 4 + @hono/zod-openapi）— 健康检查，认证端点占位，跨境资源接口待实现
-  docs/    文档站（Fumadocs + Next.js 16）
-
-packages/
-  db/                Drizzle schema 与迁移（auth / commerce / feishu）
-  auth/              better-auth 认证配置
-  marketplace/       平台连接器（Daraz / Lazada / TikTok OAuth、签名、同步）
-  ui/                shadcn/ui 共享组件与全局样式
-  shared-next/       共享 Next.js 工具
-  email/             邮件服务
-  sms-captcha/       短信验证码
-  redis/             统一 Redis 连接
-  storage/           统一对象存储
-  eslint-config/     共享 ESLint 预设
-  typescript-config/ 共享 TypeScript 预设
-```
-
-| 应用 | 使用者 | 职责 |
-| --- | --- | --- |
-| `apps/shop` | 卖家（租户） | 本组织下的店铺连接、选品、待审、商品/刊登、订单、库存、成本、财务 |
-| `apps/web` | 平台运营 | 跨租户审核、全局连接健康、待审动作抽检、平台级配置 |
-| `apps/api` | 第三方 / Agent | REST OpenAPI 与 MCP（设计已定，待实现） |
-| `apps/docs` | 用户 / 开发者 | 产品与接入文档 |
+当前仓库处于 **M0**：把原来的跨境电商单体收成可复用基建，并放上工作台、桌面壳和领域类型的骨架。导演、画布、时间线和真实供应商调用都还没做。
 
 ## 架构
 
-```mermaid
-flowchart LR
-    T["租户卖家"] --> S["apps/shop"]
-    O["平台运营"] --> W["apps/web"]
-    D["第三方 / Agent"] --> A["apps/api"]
-    S & W & A --> DB[("@workspace/db")]
-    W --> R["tRPC routers"]
-    R --> DB
-    A --> P[("PostgreSQL")]
-    DB --> P
+```text
+apps/desktop        Electron 壳。开发时打开本机工作台
+apps/workspace      Vite + React 工作台 UI（不是 Next.js）
+apps/web            Next.js 薄云控制台：登录、账户、积分、生成任务
+apps/api            Hono OpenAPI：健康检查 + 生成任务占位
+apps/docs           Fumadocs 文档站
+
+packages/drama-core 剧本、分镜、角色、场景、镜头与命令内核类型
+packages/providers  生成供应商接口（M0 只有 stub）
+packages/db         Postgres：better-auth、积分、生成任务元数据
+packages/auth       better-auth
+packages/ui         shadcn/ui
+packages/email packages/sms-captcha packages/redis packages/storage
 ```
 
-- 租户与平台共享 Better Auth 用户 / 组织模型，业务表强制 `organization_id`。
-- 跨境域 schema 位于 `packages/db/src/commerce-schema.ts`。
-- `apps/shop` 控制台主路径已接 tRPC → dataaccess → PostgreSQL（模块1–16），残留会话草稿与示例文案见 [G9 已知遗留](docs/design/cost-finance-production-closure.md)；`apps/web` 已接入 tRPC（`apiKeys` / `platformOnboarding` / `platformOps`）。
-- 平台端跨租户操作只读或受限；写操作走待审队列。
+```mermaid
+flowchart LR
+  User["普通用户"] --> Desktop["apps/desktop"]
+  Desktop --> Workspace["apps/workspace"]
+  Workspace --> Drama["packages/drama-core"]
+  Desktop --> API["apps/api 生成网关"]
+  Admin["平台管理员"] --> Web["apps/web"]
+  API --> DB[("Postgres")]
+  Web --> DB
+  API --> Providers["packages/providers"]
+```
+
+本机工作台以后负责项目、画布、时间线和导出。云端默认不托管成片。
 
 ## 技术栈
 
 | 层 | 技术 |
 | --- | --- |
-| 前端框架 | Next.js 16 + App Router |
-| UI | shadcn/ui + `@workspace/ui` + Tailwind CSS v4 |
-| RPC / API | tRPC（`apps/web`）、Hono 4 + zod-openapi（`apps/api`） |
-| ORM | Drizzle ORM + PostgreSQL |
+| 工作台 | Vite、React 19、Tailwind CSS v4、`@workspace/ui` |
+| 桌面壳 | Electron |
+| 薄云 / 文档 | Next.js 16 |
+| API | Hono 4 + zod-openapi |
+| 数据 | Drizzle ORM + PostgreSQL |
 | 认证 | better-auth |
-| 构建 | Turborepo + pnpm workspace |
+| 构建 | pnpm 10 + Turborepo |
+
+许可保持 **LGPL-2.1**（见 `LICENSE`）。
 
 ## 快速开始
 
 ```bash
 pnpm install
-cp .env.example .env          # 填充 DATABASE_URL / BETTER_AUTH_SECRET 等
-docker compose up -d          # 本地 Postgres
+cp .env.example .env
+docker compose up -d
 pnpm --filter @workspace/db db:migrate
-
-pnpm dev                      # 启动全部应用
-# 或单独启动
-pnpm --filter shop dev
-pnpm --filter web dev
-pnpm --filter api dev
-pnpm --filter doc dev
 ```
 
-`apps/docs` 固定使用 6969 端口；其余端口以各应用 `.env` 的 `PORT` 为准。
+工作台（浏览器）：
+
+```bash
+pnpm --filter workspace dev
+# http://127.0.0.1:5173
+```
+
+桌面壳（先启动工作台，再开另一个终端）：
+
+```bash
+pnpm --filter desktop dev
+```
+
+桌面进程会加载 `KAIJING_WORKSPACE_URL`，默认 `http://127.0.0.1:5173`。
+
+薄云控制台与 API：
+
+```bash
+pnpm --filter web dev     # http://localhost:30051
+pnpm --filter api dev     # http://localhost:8080
+pnpm --filter doc dev     # http://localhost:6969
+```
+
+生成任务占位：
+
+```bash
+curl -X POST http://localhost:8080/api/v1/generations \
+  -H 'content-type: application/json' \
+  -H 'origin: http://localhost:8080' \
+  -d '{"kind":"image","prompt":"角色正面"}'
+```
+
+`/api/v1` 带 CSRF 校验，本地调用需要带允许的 `Origin`。这条接口只把任务记成 `queued`，不会请求任何模型厂商。
 
 ## 常用命令
 
 ```bash
-pnpm dev / build / lint / typecheck / format
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm build
 
-pnpm --filter @workspace/db db:generate   # 生成迁移
-pnpm --filter @workspace/db db:migrate    # 应用迁移
-pnpm --filter @workspace/db db:studio     # Drizzle Studio
+pnpm --filter @workspace/db db:generate
+pnpm --filter @workspace/db db:migrate
+pnpm --filter @workspace/db db:seed:admin
 ```
 
 ## 文档
 
-- 文档总入口：[docs/README.md](docs/README.md)
-- 设计文档清单：[docs/design/INDEX.md](docs/design/INDEX.md)
-- 租户端 UED：[apps/shop/content/design/crossborder-shop-ued-product-design.md](apps/shop/content/design/crossborder-shop-ued-product-design.md)
+- 文档索引：[docs/README.md](docs/README.md)
+- 一期架构：[docs/design/phase-1.md](docs/design/phase-1.md)
 - 开发约定：[AGENTS.md](AGENTS.md)
 
-## 数据访问约定
+## M0 不做
 
-新功能统一走：
-
-```text
-UI → tRPC → mappers（可选）→ dataaccess（事务在此层）→ Drizzle → @workspace/db → PostgreSQL
-```
-
-列表必须使用数据库级分页（`count` + `limit/offset`），禁止前端 `slice` 分页。
+- 不内置导演，不拆剧本，不出图，不出视频，不导出 MP4
+- 不把 BeatDesign、Toonflow 或火宝短剧的源码拷进仓库
+- 不把工作台改写成 Next.js
+- 不做完整的浏览器多人协作工作台

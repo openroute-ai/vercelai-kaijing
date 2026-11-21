@@ -1,0 +1,27 @@
+{
+  "name": "@workspace/providers",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "description": "开镜统一生成网关的供应商接口。M0 只有占位实现，不接真实厂商 SDK。",
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts"
+  },
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.10",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^9.39.2",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

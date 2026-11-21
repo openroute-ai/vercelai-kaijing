@@ -6,7 +6,7 @@ export type SiteBreadcrumbItem = {
 }
 
 const CONSOLE_ROOT: SiteBreadcrumbItem = {
-  label: '跨境运营中枢',
+  label: '开镜控制台',
   href: '/console',
 }
 
@@ -26,13 +26,13 @@ export function getSiteBreadcrumbTrail(pathname: string): SiteBreadcrumbItem[] {
   }
 
   if (!pathname.startsWith('/console')) {
-    return [{ label: '平台运营后台', href: '/' }]
+    return [{ label: '开镜控制台', href: '/' }]
   }
 
   if (pathname === '/console') {
     return [
-      { label: '跨境运营中枢', href: '/console' },
-      { label: '运营总览' },
+      { label: '开镜控制台', href: '/console' },
+      { label: '薄云总览' },
     ]
   }
 

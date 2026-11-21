@@ -6,7 +6,7 @@ import Script from 'next/script'
  * Umami Analytics
  *
  * https://umami.is
- * https://gongjiyun.com/docs/analytics#umami
+ * Umami analytics. Disabled outside production.
  */
 export function UmamiAnalytics() {
   if (process.env.NODE_ENV !== 'production') {

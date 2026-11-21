@@ -7,7 +7,7 @@
 
 const HARBOR_API_TIMEOUT = 30_000
 
-export const HARBOR_HOST = "registry.gongji.cloud"
+export const HARBOR_HOST = "registry.example.invalid"
 
 // ---------------------------------------------------------------------------
 // Types

@@ -3,35 +3,22 @@ import { describe, it } from 'node:test'
 import { mapLegacyPlatformPath } from './legacy-paths'
 
 describe('mapLegacyPlatformPath', () => {
-  it('maps /crossborder list and detail paths to /console', () => {
+  it('maps old crossborder paths back to the console overview', () => {
     assert.equal(mapLegacyPlatformPath('/crossborder'), '/console')
-    assert.equal(mapLegacyPlatformPath('/crossborder/tenants'), '/console/tenants')
-    assert.equal(
-      mapLegacyPlatformPath('/crossborder/tenants/abc'),
-      '/console/tenants/abc',
-    )
-    assert.equal(
-      mapLegacyPlatformPath('/crossborder/shop-conflicts/c1'),
-      '/console/shop-conflicts/c1',
-    )
+    assert.equal(mapLegacyPlatformPath('/crossborder/tenants'), '/console')
+    assert.equal(mapLegacyPlatformPath('/crossborder/shops/abc'), '/console')
   })
 
-  it('maps coming-soon pages from old console paths to settings', () => {
-    assert.equal(
-      mapLegacyPlatformPath('/crossborder/platform-config'),
-      '/settings/platform-config',
-    )
+  it('maps old console settings aliases', () => {
+    assert.equal(mapLegacyPlatformPath('/console/platform-config'), '/settings/platform-config')
     assert.equal(mapLegacyPlatformPath('/console/audit-logs'), '/settings/audit-logs')
-    assert.equal(
-      mapLegacyPlatformPath('/console/announcements'),
-      '/settings/announcements',
-    )
+    assert.equal(mapLegacyPlatformPath('/console/announcements'), '/settings/announcements')
     assert.equal(mapLegacyPlatformPath('/console/roles'), '/settings/roles')
   })
 
   it('leaves current paths unchanged', () => {
     assert.equal(mapLegacyPlatformPath('/console'), null)
-    assert.equal(mapLegacyPlatformPath('/console/tenants/abc'), null)
+    assert.equal(mapLegacyPlatformPath('/console/users/abc'), null)
     assert.equal(mapLegacyPlatformPath('/settings/platform-config'), null)
   })
 })

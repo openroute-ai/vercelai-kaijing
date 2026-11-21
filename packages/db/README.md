@@ -1,6 +1,6 @@
 # @workspace/db — 数据模型与迁移
 
-全仓**唯一的数据模型来源**：Drizzle ORM 的表定义、关系与迁移。所有应用（`apps/web`、`apps/shop`、`apps/api`）都只从这里读取 schema，不在各自应用内重复定义表结构。
+全仓云端数据模型：Drizzle ORM 的表定义与迁移。`apps/web`、`apps/api` 和 `packages/auth` 从这里读 schema。
 
 ## 定位
 
@@ -14,11 +14,12 @@
 
 | 文件 | 领域 |
 | --- | --- |
-| `auth-schema.ts` | better-auth：`user` / `session` / `account` / `verification` 与组织模型 |
-| `commerce-schema.ts` | 跨境运营域：`shops`、`products`、`listings`、`orders`、`inventory_*`、`cost_components`、`pending_actions`、`product_candidates` 等 |
-| `feishu-schema.ts` | 飞书集成 |
-| `schema.ts` | 聚合导出与 `AppDbSchema` |
-| `client.ts` | `createPgClient()` 连接池与 Drizzle 客户端 |
+| `auth-schema.ts` | better-auth：用户、会话、组织 |
+| `web-auth-schema.ts` | 平台管理员身份，独立 schema |
+| `kaijing-schema.ts` | 积分账户、积分流水、生成任务 |
+| `oauth-schema.ts` / `rbac-schema.ts` | OAuth 与角色 |
+| `schema.ts` | 聚合导出 |
+| `client.ts` | `createPgClient()` |
 
 约定：
 
@@ -53,12 +54,8 @@ pnpm --filter @workspace/db db:check
 # 图形化查看数据
 pnpm --filter @workspace/db db:studio
 
-# 跨境演示种子：仅沙箱组织（默认 org_shop_dev_demo / slug=shop-dev-demo），手工执行，幂等。
-# 禁止写入生产或已入驻真实租户；不会在入驻审核或部署流水线中自动执行。
-pnpm --filter @workspace/db db:seed:commerce-products
-pnpm --filter @workspace/db db:seed:commerce-orders
-pnpm --filter @workspace/db db:seed:commerce-dashboard   # 仪表盘近 7/30/90 天订单与库存流水
-# 不要用订单增量同步或 OAuth 回调假装平台成功来写演示数据。
+# 平台管理员种子
+pnpm --filter @workspace/db db:seed:admin
 ```
 
 ## 运行前置

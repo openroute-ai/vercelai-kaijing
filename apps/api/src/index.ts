@@ -2,22 +2,15 @@ import { serve } from "@hono/node-server"
 import app from "./app"
 import { pool } from "./lib/db"
 import { env } from "./lib/env"
-import {
-  startMarketplaceSyncCron,
-  stopMarketplaceSyncCron,
-} from "./lib/marketplace/cron"
 
-// Vercel 以 default export 作为 Hono 入口；本地/自托管才启动常驻 HTTP 服务。
 export default app
 
 if (!process.env.VERCEL) {
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
-    console.log(`API running on http://localhost:${info.port}`)
-    startMarketplaceSyncCron()
+    console.log(`开镜 API http://localhost:${info.port}`)
   })
 
   function shutdown() {
-    stopMarketplaceSyncCron()
     server.close(async (err) => {
       if (err) {
         console.error(err)

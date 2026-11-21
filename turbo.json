@@ -2,50 +2,17 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "globalEnv": [
+    "API_URL",
     "BETTER_AUTH_SECRET",
-    "ONBOARDING_FILE_SECRET",
     "BETTER_AUTH_TRUSTED_ORIGINS",
     "BETTER_AUTH_URL",
-    "CONSUMER_SITE_URL",
-    "CRON_SECRET",
-    "DARAZ_ACCESS_TOKEN",
+    "DATABASE_POOL_MAX",
     "DATABASE_SSL",
     "DATABASE_URL",
-    "LAZADA_ACCESS_TOKEN",
-    "LIBLIB_API_KEY",
-    "LIBLIB_API_SECRET",
-    "LIBLIB_OPENAPI_BASE_URL",
-    "MARKETPLACE_CREDENTIALS_KEY",
-    "MARKETPLACE_SYNC_ACCESS_TOKEN",
-    "MARKETPLACE_SYNC_CRON_ENABLED",
-    "MARKETPLACE_SYNC_LIVE",
-    "MARKETPLACE_SYNC_PERSIST",
-    "MARKETPLACE_SYNC_PLATFORM",
-    "MARKETPLACE_SYNC_REFRESH_TOKEN",
-    "MARKETPLACE_SYNC_REGION",
-    "MARKETPLACE_SYNC_SHOP_ID",
-    "MARKETPLACE_SYNC_CRON_TIMEZONE",
-    "MARKETPLACE_SYNC_ORDERS_CRON",
-    "MARKETPLACE_SYNC_LOGISTICS_CRON",
-    "MARKETPLACE_SYNC_REVIEWS_CRON",
-    "MARKETPLACE_SYNC_ORDERS_BACKFILL_DAYS",
-    "MARKETPLACE_SYNC_ORDERS_OVERLAP_MINUTES",
-    "MARKETPLACE_SYNC_ORDERS_MAX_PAGES",
-    "MARKETPLACE_SYNC_LOGISTICS_LIMIT",
-    "MARKETPLACE_SYNC_LOGISTICS_LOOKBACK_DAYS",
-    "MARKETPLACE_SYNC_REVIEWS_ITEMS_LIMIT",
-    "MARKETPLACE_SYNC_REVIEWS_LOOKBACK_DAYS",
-    "MARKETPLACE_SYNC_REVIEWS_MAX_PAGES",
-    "MARKETPLACE_TOKEN_REFRESH_SKEW_SECONDS",
-    "MARKETPLACE_WEBHOOK_SKIP_VERIFY",
-    "MARKETPLACE_WEBHOOK_SYNC_ENABLED",
-    "MERCHANT_AUTO_RECHARGE_ENABLED",
-    "MERCHANT_VOUCHER_EXPIRY_BATCH_SIZE",
-    "MERCHANT_VOUCHER_EXPIRY_CRON",
-    "MERCHANT_VOUCHER_EXPIRY_ENABLED",
-    "MERCHANT_VOUCHER_EXPIRY_MAX_BATCHES",
-    "MERCHANT_VOUCHER_EXPIRY_TIMEZONE",
+    "KAIJING_WORKSPACE_URL",
     "MISTRAL_API_KEY",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_BASE_URL",
     "NEXT_PUBLIC_URL",
     "NODE_ENV",
     "PORT",
@@ -54,66 +21,38 @@
     "REDIS_PASSWORD",
     "REDIS_PORT",
     "REDIS_URL",
-    "SHOP_BINDING_REQUIRES_APPROVAL",
-    "SHOP_DEV_ORGANIZATION_ID",
-    "OPENSHOP_MCP_ENABLED",
-    "OPENSHOP_MCP_RESOURCE",
-    "OPENSHOP_OAUTH_ISSUER",
-    "NEXT_PUBLIC_API_URL",
-    "API_URL",
-    "SHOP_KV_REST_API_READ_ONLY_TOKEN",
-    "SHOP_KV_REST_API_TOKEN",
-    "SHOP_KV_REST_API_URL",
-    "SHOP_KV_URL",
-    "SHOP_REDIS_URL",
-    "SKYPILOT_API_TOKEN",
-    "SKYPILOT_API_URL",
+    "RESEND_API_KEY",
+    "SMTP_FROM",
+    "SMTP_HOST",
+    "SMTP_PASS",
+    "SMTP_PORT",
+    "STORAGE_ACCESS_KEY_ID",
+    "STORAGE_BUCKET_NAME",
+    "STORAGE_DRIVER",
+    "STORAGE_ENDPOINT",
     "STORAGE_LOCAL_DIR",
-    "TIKTOK_ACCESS_TOKEN",
-    "TIKTOK_SHOP_CIPHER",
+    "STORAGE_SECRET_ACCESS_KEY",
     "UPSTASH_REDIS_REST_TOKEN",
     "UPSTASH_REDIS_REST_URL",
-    "VERCEL",
-    "WAVERLESS_BASE_URL",
-    "WAVERLESS_CONTROL_API_URL",
-    "WAVERLESS_GONGJI_COST_PER_GPU_HOUR",
-    "WAVERLESS_SERVICE_API_KEY",
-    "WAVERLESS_SERVICE_SECRET"
+    "VERCEL"
   ],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "format": {
-      "dependsOn": [
-        "^format"
-      ]
+      "dependsOn": ["^format"]
     },
     "typecheck": {
-      "dependsOn": [
-        "^typecheck"
-      ]
+      "dependsOn": ["^typecheck"]
     },
     "start": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false,
       "persistent": true
     },

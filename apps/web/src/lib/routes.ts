@@ -41,36 +41,15 @@ export enum Routes {
   SettingsInvite = '/settings/invite',
   SettingsLogout = '/settings/logout',
 
-  // platform console (formerly /crossborder)
   Console = '/console',
-  ConsoleTenants = '/console/tenants',
-  ConsoleOnboarding = '/console/onboarding',
-  ConsoleShops = '/console/shops',
   ConsoleUsers = '/console/users',
   ConsoleInvitations = '/console/invitations',
-  ConsoleShopConflicts = '/console/shop-conflicts',
-  ConsoleAuthExceptions = '/console/auth-exceptions',
-  ConsoleSyncHealth = '/console/sync-health',
-  ConsolePendingActions = '/console/pending-actions',
+  ConsoleCredits = '/console/credits',
+  ConsoleGenerationJobs = '/console/generation-jobs',
   SettingsPlatformConfig = '/settings/platform-config',
   SettingsAuditLogs = '/settings/audit-logs',
   SettingsAnnouncements = '/settings/announcements',
   SettingsRoles = '/settings/roles',
-
-  // backward-compatible aliases
-  Crossborder = Console,
-  CrossborderTenants = ConsoleTenants,
-  CrossborderOnboarding = ConsoleOnboarding,
-  CrossborderShops = ConsoleShops,
-  CrossborderUsers = ConsoleUsers,
-  CrossborderShopConflicts = ConsoleShopConflicts,
-  CrossborderAuthExceptions = ConsoleAuthExceptions,
-  CrossborderSyncHealth = ConsoleSyncHealth,
-  CrossborderPendingActions = ConsolePendingActions,
-  CrossborderPlatformConfig = SettingsPlatformConfig,
-  CrossborderAuditLogs = SettingsAuditLogs,
-  CrossborderAnnouncements = SettingsAnnouncements,
-  CrossborderRoles = SettingsRoles,
 }
 
 /**

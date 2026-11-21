@@ -1,0 +1,22 @@
+---
+title: 架构
+description: 桌面客户端与薄云怎么分工
+---
+
+## 两条进程
+
+| 进程 | 应用 | 职责 |
+| --- | --- | --- |
+| 本机 | `apps/desktop` + `apps/workspace` | 项目、画布、时间线、导出 |
+| 云端 | `apps/web` + `apps/api` | 登录、积分、生成网关 |
+
+两边可以共用 `packages/ui` 的基础组件，但工作台不要迁到 Next.js App Router。
+
+## 生成
+
+桌面端把请求交给 `POST /api/v1/generations`。网关通过 `packages/providers` 的 `GenerationProvider` 调供应商。M0 的实现是 `createStubProvider()`，任务会记成 `queued`，不会出网。
+
+## 数据
+
+- 本机项目以后用 SQLite 和本地文件。M0 还没有这层。
+- 云端 Postgres 只放 better-auth 账户、`credit_accounts` / `credit_ledger` 和 `generation_jobs`。

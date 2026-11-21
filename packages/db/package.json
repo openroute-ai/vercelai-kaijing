@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "description": "开镜 Postgres schema：账户、权限，以及积分与生成任务元数据。",
   "scripts": {
     "build": "tsdown",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
@@ -10,30 +11,10 @@
     "db:push": "drizzle-kit push --config drizzle.config.ts",
     "db:check": "drizzle-kit check --config drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config drizzle.config.ts",
-    "db:seed:metal": "tsx src/scripts/seed-metal-devices.ts",
     "db:seed:admin": "tsx src/scripts/platform-admin-init.ts",
-    "db:seed:funding": "tsx src/scripts/seed-merchant-funding.ts",
-    "db:seed:images": "tsx src/scripts/seed-base-images.ts",
     "lint": "eslint",
     "format": "prettier --write \"**/*.ts\"",
-    "typecheck": "tsc --noEmit",
-    "db:seed:commerce-products": "tsx src/scripts/seed-commerce-products.ts",
-    "db:seed:commerce-purchase": "tsx src/scripts/seed-commerce-purchase.ts",
-    "db:seed:commerce-orders": "tsx src/scripts/seed-commerce-orders.ts",
-    "db:seed:commerce-logistics": "tsx src/scripts/seed-commerce-logistics.ts",
-    "db:seed:commerce-fee-templates": "tsx src/scripts/seed-commerce-fee-templates.ts",
-    "db:seed:commerce-aftersales": "tsx src/scripts/seed-commerce-aftersales.ts",
-    "db:seed:commerce-ocean": "tsx src/scripts/seed-commerce-ocean.ts",
-    "db:seed:commerce-wms": "tsx src/scripts/seed-commerce-wms.ts",
-    "db:seed:commerce-listings": "tsx src/scripts/seed-commerce-listings.ts",
-    "db:seed:commerce-suppliers": "tsx src/scripts/seed-commerce-suppliers.ts",
-    "db:seed:commerce-finance": "tsx src/scripts/seed-commerce-finance.ts",
-    "db:seed:commerce-candidates": "tsx src/scripts/seed-commerce-candidates.ts",
-    "db:seed:commerce-console-ops": "tsx src/scripts/seed-commerce-console-ops.ts",
-    "db:seed:commerce-dashboard": "tsx src/scripts/seed-commerce-dashboard.ts",
-    "db:seed:commerce-carton-specs": "tsx src/scripts/seed-commerce-carton-specs.ts",
-    "db:seed:dictionaries": "tsx src/scripts/seed-dictionaries.ts",
-    "db:seed:platform-basics": "tsx src/scripts/seed-platform-basics.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
@@ -60,21 +41,6 @@
     },
     "./schema": {
       "default": "./src/schema.ts"
-    },
-    "./platform-basics": {
-      "default": "./src/platform-basics.ts"
-    },
-    "./platform-catalogs": {
-      "default": "./src/platform-catalogs.ts"
-    },
-    "./onboarding-document-requirements": {
-      "default": "./src/onboarding-document-requirements.ts"
-    },
-    "./platform-settings": {
-      "default": "./src/platform-settings.ts"
-    },
-    "./merchant-purchase-price-sync": {
-      "default": "./src/merchant-purchase-price-sync.ts"
     }
   }
 }

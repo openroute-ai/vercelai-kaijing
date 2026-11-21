@@ -356,18 +356,18 @@ function NotificationsSection() {
   const items = [
     {
       key: 'onboarding' as const,
-      title: '入驻审核提醒',
-      description: '有新的租户入驻申请时发送站内信。',
+      title: '账户提醒',
+      description: '登录与邀请相关的站内信。',
     },
     {
       key: 'syncHealth' as const,
-      title: '同步异常提醒',
-      description: '店铺同步任务连续失败时发送站内信。',
+      title: '生成任务提醒',
+      description: '生成任务失败或完成时发送站内信。',
     },
     {
       key: 'weeklyReport' as const,
-      title: '运营周报',
-      description: '每周一发送平台运营数据摘要。',
+      title: '用量周报',
+      description: '每周发送积分与生成用量摘要。',
     },
     {
       key: 'productNews' as const,
@@ -477,7 +477,7 @@ function AboutSection() {
         </div>
         <div className="flex items-center justify-between border-b pb-2">
           <span className="text-muted-foreground">业务域</span>
-          <span>跨境运营 · Daraz 斯里兰卡站</span>
+          <span>桌面客户端 + 薄云 · vercelai.cn</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">当前环境</span>

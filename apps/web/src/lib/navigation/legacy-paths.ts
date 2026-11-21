@@ -6,14 +6,12 @@ const CONSOLE_TO_SETTINGS: Record<string, string> = {
 }
 
 /**
- * 将旧平台路径映射到当前规范路径。
- * /crossborder/* → /console/*，其中四个即将上线页再转到 /settings/*。
+ * 旧平台路径收口到当前控制台。
+ * /crossborder/* 一律回到总览，避免落到已删除的店铺页面。
  */
 export function mapLegacyPlatformPath(pathname: string): string | null {
-  let next = pathname
-  if (next === '/crossborder' || next.startsWith('/crossborder/')) {
-    next = `/console${next.slice('/crossborder'.length)}`
+  if (pathname === '/crossborder' || pathname.startsWith('/crossborder/')) {
+    return '/console'
   }
-  next = CONSOLE_TO_SETTINGS[next] ?? next
-  return next !== pathname ? next : null
+  return CONSOLE_TO_SETTINGS[pathname] ?? null
 }

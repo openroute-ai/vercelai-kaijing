@@ -1,5 +1,6 @@
 {
-  "name": "studio",
+  "name": "kaijing",
+  "description": "开镜（Kaijing）：开源 AI 短剧 / 漫剧制作工具。一期是桌面客户端加薄云。",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,10 +10,9 @@
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
-    "docker:build:web": "docker build -f docker/Dockerfile --target web --build-arg BUILD_TARGET=web -t gongji-crm-web:latest .",
-    "docker:build:docs": "docker build -f docker/Dockerfile --target docs --build-arg BUILD_TARGET=docs -t gongji-crm-docs:latest .",
-    "docker:build:api": "docker build -f docker/Dockerfile --target api --build-arg BUILD_TARGET=api -t gongji-crm-api:latest .",
-    "docker:build:gpus": "docker build -f apps/gpus/Dockerfile -t gongji-crm-gpus:latest .",
+    "docker:build:web": "docker build -f docker/Dockerfile --target web --build-arg BUILD_TARGET=web -t kaijing-web:latest .",
+    "docker:build:docs": "docker build -f docker/Dockerfile --target docs --build-arg BUILD_TARGET=docs -t kaijing-docs:latest .",
+    "docker:build:api": "docker build -f docker/Dockerfile --target api --build-arg BUILD_TARGET=api -t kaijing-api:latest .",
     "docker:compose:build": "docker compose -f docker/docker-compose.build.yml build",
     "docker:build": "docker compose -f docker/docker-compose.build.yml build"
   },

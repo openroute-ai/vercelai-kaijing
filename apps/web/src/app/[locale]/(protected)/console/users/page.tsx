@@ -25,10 +25,10 @@ import {
 
 
 const ROLE_LABELS: Record<string, string> = {
-  tenant_owner: '租户所有者',
-  tenant_admin: '租户管理员',
-  tenant_engineer: '租户工程师',
-  tenant_viewer: '租户查看者',
+  tenant_owner: '组织所有者',
+  tenant_admin: '组织管理员',
+  tenant_engineer: '组织工程师',
+  tenant_viewer: '组织查看者',
   owner: '所有者',
   admin: '管理员',
   member: '成员',
@@ -88,7 +88,7 @@ export default function CrossborderUsersPage() {
           </p>
         </div>
         <div className="rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs">租户组织成员</p>
+          <p className="text-muted-foreground text-xs">已加入组织</p>
           <p className="text-2xl font-semibold tabular-nums">
             {data?.summary.tenantMembers ?? '—'}
           </p>
@@ -106,7 +106,7 @@ export default function CrossborderUsersPage() {
           <TableRow>
             <TableHead>用户</TableHead>
             <TableHead>联系方式</TableHead>
-            <TableHead>所属租户组织</TableHead>
+            <TableHead>所属组织</TableHead>
             <TableHead>状态</TableHead>
             <TableHead>注册时间</TableHead>
             <TableHead className="text-right">操作</TableHead>

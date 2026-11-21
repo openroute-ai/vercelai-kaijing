@@ -10,24 +10,14 @@ import {
   or,
   sql,
 } from 'drizzle-orm'
-import {
-  auditEvents,
-  consoleNotifications,
-  member,
-  organization,
-  session,
-  shops,
-  tenantOnboardingApplications,
-  user,
-} from '@workspace/db'
+import { member, organization, session, user } from '@workspace/db'
 import { db } from '@/lib/db'
 import { pageValues } from '@/lib/server/dataaccess/pagination'
 
 /**
- * 平台运营用户管理（apps/web，租户侧 public.users）。
- * 平台管理员自身在 web_auth schema，与本模块物理隔离；此处只读为主，
- * 写操作仅限风控封禁/解封，均写审计并通知所属租户组织。
- * @see apps/web/content/design/platform-ops-review-and-management.md §5
+ * 账户用户管理（public.users）。
+ * 平台管理员在 web_auth schema，与这里物理隔离。
+ * 封禁只更新用户并清掉会话，不写旧的经营审计表。
  */
 
 export type PlatformUserListItem = {
@@ -171,33 +161,14 @@ export async function getPlatformUser(id: string) {
       orgType: organization.orgType,
       role: member.role,
       entryApproved: organization.entryApproved,
-      identityStatus: organization.identityStatus,
-      merchantStatus: organization.merchantStatus,
       joinedAt: member.createdAt,
-      applicationId: tenantOnboardingApplications.id,
-      applicationStatus: tenantOnboardingApplications.status,
-      applicationVersion: tenantOnboardingApplications.version,
-      shopCount: sql<number>`(select count(*) from ${shops} where ${shops.organizationId} = ${organization.id} and ${shops.deletedAt} is null)`,
     })
     .from(member)
     .innerJoin(organization, eq(organization.id, member.organizationId))
-    .leftJoin(
-      tenantOnboardingApplications,
-      eq(
-        tenantOnboardingApplications.organizationId,
-        organization.id,
-      ),
-    )
     .where(eq(member.userId, id))
     .orderBy(desc(member.createdAt))
 
-  return {
-    user: row,
-    memberships: memberships.map((membership) => ({
-      ...membership,
-      shopCount: Number(membership.shopCount),
-    })),
-  }
+  return { user: row, memberships }
 }
 
 type DbLike = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -245,38 +216,6 @@ export async function banPlatformUser(input: {
     await tx.delete(session).where(eq(session.userId, target.id))
 
     const orgIds = await tenantOrgIdsOfUser(tx, target.id)
-    if (orgIds.length) {
-      await tx.insert(auditEvents).values(
-        orgIds.map((organizationId) => ({
-          organizationId,
-          actorUserId: input.operatorId,
-          action: 'user.platform_ban',
-          entityType: 'user',
-          entityId: target.id,
-          before: { banned: false },
-          after: {
-            banned: true,
-            reason: input.reason.trim(),
-            banExpires: input.expiresAt ?? null,
-          },
-          result: 'success',
-        })),
-      )
-      await tx.insert(consoleNotifications).values(
-        orgIds.map((organizationId) => ({
-          organizationId,
-          userId: target.id,
-          category: 'system',
-          title: '成员账号已被平台封禁',
-          summary: `成员「${target.name || target.email}」已被平台封禁：${input.reason.trim()}`,
-          body: input.reason.trim(),
-          href: '/settings/members',
-          sourceType: 'platform_user_ops',
-          sourceId: target.id,
-        })),
-      )
-    }
-
     return {
       ok: true as const,
       userId: target.id,
@@ -315,34 +254,6 @@ export async function unbanPlatformUser(input: {
       .where(eq(user.id, target.id))
 
     const orgIds = await tenantOrgIdsOfUser(tx, target.id)
-    if (orgIds.length) {
-      await tx.insert(auditEvents).values(
-        orgIds.map((organizationId) => ({
-          organizationId,
-          actorUserId: input.operatorId,
-          action: 'user.platform_unban',
-          entityType: 'user',
-          entityId: target.id,
-          before: { banned: true },
-          after: { banned: false },
-          result: 'success',
-        })),
-      )
-      await tx.insert(consoleNotifications).values(
-        orgIds.map((organizationId) => ({
-          organizationId,
-          userId: target.id,
-          category: 'system',
-          title: '成员账号已解封',
-          summary: `成员「${target.name || target.email}」已由平台恢复，可重新登录。`,
-          body: '',
-          href: '/settings/members',
-          sourceType: 'platform_user_ops',
-          sourceId: target.id,
-        })),
-      )
-    }
-
     return { ok: true as const, userId: target.id, organizations: orgIds.length }
   })
 }

@@ -6,7 +6,7 @@ import Script from 'next/script'
  * Ahrefs Analytics
  *
  * https://ahrefs.com/
- * https://gongjiyun.com/docs/analytics#ahrefs
+ * Ahrefs analytics. Disabled outside production.
  */
 export function AhrefsAnalytics() {
   if (process.env.NODE_ENV !== 'production') {

@@ -1,21 +1,33 @@
 ---
-title: Open Shop 文档
-description: 多租户跨境电商运营中枢的产品与接入文档
+title: 开镜
+description: 开源 AI 短剧 / 漫剧制作工具
 icon: IconHome
 ---
 
-Open Shop 是面向多租户卖家的跨境电商运营数据中枢，当前 MVP 聚焦 Daraz 斯里兰卡站。
+开镜（Kaijing）是开源的 AI 短剧 / 漫剧制作工具。仓库是 `openroute-ai/vercelai-kaijing`，平台域名是 vercelai.cn。
 
-## 文档范围
+## 一期怎么交付
 
-- 租户端控制台：选品、待审、商品/刊登、订单、库存、成本与财务
-- 平台运营后台：租户/店铺审核、同步健康、待审抽检
-- OpenAPI / MCP：第三方与 Agent 接入
+普通用户下载 Windows 或 macOS 客户端，注册登录后就能用。生图和生视频走平台的生成网关，用积分结算，不需要自己申请模型密钥。
 
-## 仓库内文档
+工作台跑在用户电脑上。云端只保存账户、积分和生成任务状态，不托管完整项目和成片。
 
-- 设计文档索引：`docs/design/INDEX.md`
-- 租户端 UED：`apps/shop/content/design/`
-- 开发约定：`AGENTS.md`
+## 仓库里现在有什么
 
-面向用户的产品文档正在整理中。
+M0 是骨架，不是能出片的产品：
+
+- `apps/desktop`：Electron 壳，开发时打开本机工作台
+- `apps/workspace`：Vite + React 欢迎页
+- `apps/web` / `apps/api`：登录、积分和生成任务占位
+- `packages/drama-core`、`packages/providers`：领域类型和供应商接口
+
+剧本改写、分镜、画布、时间线和真实供应商调用都还没实现。
+
+## 本地运行工作台
+
+```bash
+pnpm install
+pnpm --filter workspace dev
+```
+
+浏览器打开 `http://127.0.0.1:5173`。需要桌面窗口时，另开一个终端执行 `pnpm --filter desktop dev`。

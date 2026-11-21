@@ -10,7 +10,7 @@ import Script from 'next/script'
  * you do not need to add new script to this component.
  *
  * https://plausible.io
- * https://gongjiyun.com/docs/analytics#plausible
+ * Plausible analytics. Disabled outside production.
  */
 export function PlausibleAnalytics() {
   if (process.env.NODE_ENV !== 'production') {

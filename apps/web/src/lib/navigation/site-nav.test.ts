@@ -8,42 +8,29 @@ import {
 } from './site-nav'
 
 describe('console and settings navigation', () => {
-  it('keeps coming-soon menus in settings, not console', () => {
+  it('keeps account and thin-cloud menus, and settings pages out of the console', () => {
     const consoleUrls = SITE_NAV_GROUPS.flatMap((group) => group.items.map((item) => item.url))
     const settingsUrls = SETTINGS_NAV_GROUPS.flatMap((group) => group.items.map((item) => item.url))
+    assert.deepEqual(consoleUrls, [
+      '/console/users',
+      '/console/invitations',
+      '/console/credits',
+      '/console/generation-jobs',
+    ])
     assert.ok(!consoleUrls.includes('/settings/platform-config'))
-    assert.ok(!consoleUrls.includes('/console/platform-config'))
     assert.ok(settingsUrls.includes('/settings/platform-config'))
     assert.ok(settingsUrls.includes('/settings/audit-logs'))
     assert.ok(settingsUrls.includes('/settings/announcements'))
     assert.ok(settingsUrls.includes('/settings/roles'))
-    assert.ok(consoleUrls.includes('/console/invitations'))
-    assert.ok(!settingsUrls.includes('/console/invitations'))
-    for (const url of [
-      '/console/platform-basics',
-      '/console/dictionaries',
-      '/console/categories',
-      '/console/carriers',
-      '/console/import-templates',
-      '/console/tariffs',
-      '/console/fee-templates',
-    ]) {
-      assert.ok(consoleUrls.includes(url), url)
-      assert.ok(!settingsUrls.includes(url), url)
-    }
   })
 
   it('activates list nav items for detail routes', () => {
-    const tenants = findBestMatchingNavItem('/console/tenants/t1')
-    assert.equal(tenants?.url, '/console/tenants')
-    assert.equal(isNavItemActive('/console/tenants/t1', tenants!), true)
-
-    const conflicts = findBestMatchingNavItem('/console/shop-conflicts/c1')
-    assert.equal(conflicts?.url, '/console/shop-conflicts')
-    assert.equal(isNavItemActive('/console/shop-conflicts/c1', conflicts!), true)
+    const users = findBestMatchingNavItem('/console/users/u1')
+    assert.equal(users?.url, '/console/users')
+    assert.equal(isNavItemActive('/console/users/u1', users!), true)
   })
 
-  it('does not treat account settings as active on coming-soon pages', () => {
+  it('does not treat account settings as active on other settings pages', () => {
     const account = SETTINGS_NAV_GROUPS[0]?.items[0]
     assert.ok(account)
     assert.equal(isNavItemActive('/settings', account), true)

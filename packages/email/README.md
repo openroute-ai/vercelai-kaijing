@@ -7,7 +7,7 @@
 | 项 | 说明 |
 | --- | --- |
 | 作用 | 提供邮件模板与发送入口 |
-| 消费方 | `apps/web`、`apps/shop` 等 |
+| 消费方 | `apps/web` |
 | 依赖 | SMTP（`SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM`） |
 
 ## 主要内容

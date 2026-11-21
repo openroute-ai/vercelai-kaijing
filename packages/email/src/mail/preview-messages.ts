@@ -4,7 +4,7 @@ import type { Locale, Messages } from 'next-intl'
 export const previewDefaultLocale = 'en' as Locale
 
 export const previewMessages = {
-  Metadata: { name: '共绩CRM' },
+  Metadata: { name: '开镜' },
   Mail: {
     common: {
       team: 'The {name} team',

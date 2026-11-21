@@ -8,7 +8,7 @@ export function SiteHeaderSearch() {
       title="全局搜索即将上线"
     >
       <Search className="size-4 shrink-0" />
-      <span className="truncate">搜索租户、店铺、订单…</span>
+      <span className="truncate">搜索用户、任务…</span>
       <kbd className="bg-background ml-auto rounded border px-1.5 py-0.5 text-[10px]">
         ⌘K
       </kbd>

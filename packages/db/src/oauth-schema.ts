@@ -1,5 +1,5 @@
 /**
- * Better Auth jwt + oauth-provider 表（shop 授权服务器专用）。
+ * Better Auth jwt + oauth-provider 表。桌面端以后用它登录薄云。
  * JS 字段驼峰，SQL 列名蛇形；表名蛇形，并在 oauthProvider.schema.modelName 中对齐。
  */
 import { createId } from "@paralleldrive/cuid2"

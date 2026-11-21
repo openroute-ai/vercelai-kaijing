@@ -6,7 +6,7 @@ import Script from 'next/script'
  * Seline Analytics
  *
  * https://seline.com
- * https://gongjiyun.com/docs/analytics#seline
+ * Seline analytics. Disabled outside production.
  * https://seline.com/docs/install-seline
  * https://seline.com/docs/stripe
  */

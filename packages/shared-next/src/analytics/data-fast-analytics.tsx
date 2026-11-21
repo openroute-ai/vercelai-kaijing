@@ -6,7 +6,7 @@ import Script from 'next/script'
  * DataFast Analytics
  *
  * https://datafa.st
- * https://gongjiyun.com/docs/analytics#datafast
+ * DataFast analytics. Disabled outside production.
  */
 export default function DataFastAnalytics() {
   if (process.env.NODE_ENV !== 'production') {

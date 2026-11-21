@@ -72,9 +72,9 @@ export function createMailService(options: CreateMailServiceOptions): MailServic
       }
 
       const defaultSubjects: Record<string, string> = {
-        litellmBudgetUpdateFailed: `[共绩CRM Proxy] 预算更新失败 - 订单 ${String(context.orderId ?? '')}`,
-        syncErrorNotification: `[共绩CRM Proxy 同步任务] 同步异常通知 - ${String(context.syncDate ?? '')}`,
-        wechatBudgetUpdateFailed: `[微信支付] 共绩CRM Proxy 预算更新失败通知 - 订单 ${String(context.orderId ?? '')}`,
+        litellmBudgetUpdateFailed: `[开镜] 预算更新失败 - 订单 ${String(context.orderId ?? '')}`,
+        syncErrorNotification: `[开镜] 同步异常通知 - ${String(context.syncDate ?? '')}`,
+        wechatBudgetUpdateFailed: `[开镜] 预算更新失败通知 - 订单 ${String(context.orderId ?? '')}`,
         wechatWebhookFailed: `[微信支付 Webhook] ${getErrorTypeLabel(String(context.errorType))} - ${context.orderId ? `订单 ${String(context.orderId)}` : '未知订单'}`,
       }
       subject = defaultSubjects[template] ?? ''

@@ -7,7 +7,7 @@
 | 项 | 说明 |
 | --- | --- |
 | 作用 | 提供设计系统：组件、`cn()`、hooks、`globals.css` 主题 token |
-| 消费方 | `apps/shop`、`apps/web`、`apps/docs` |
+| 消费方 | `apps/workspace`、`apps/web`、`apps/docs` |
 | 技术栈 | shadcn/ui + Radix UI + `@base-ui/react`、Tailwind CSS v4、`class-variance-authority` |
 | 边界 | 不引用 `apps/*` 或其他业务包，保持纯 UI |
 
@@ -47,7 +47,7 @@ pnpm --filter @workspace/ui run typecheck
 
 ## 部署
 
-**不独立部署**，组件随各应用打包发布；改动本包会影响所有应用的视觉与交互，发布前建议至少回归 `apps/web` 与 `apps/shop` 的主要页面。
+**不独立部署**，组件随各应用打包发布；改动本包会影响工作台、控制台和文档站。
 
 ## 相关文档
 

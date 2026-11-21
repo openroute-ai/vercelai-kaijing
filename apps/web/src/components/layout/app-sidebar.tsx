@@ -39,9 +39,9 @@ export function AppSidebar({
               <LocaleLink href="/console">
                 <Logo className="size-8 shrink-0" />
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate text-sm font-semibold">跨境运营中枢</span>
+                  <span className="truncate text-sm font-semibold">开镜</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    平台运营后台
+                    薄云控制台
                   </span>
                 </div>
               </LocaleLink>

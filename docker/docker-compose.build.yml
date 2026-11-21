@@ -6,7 +6,7 @@
 
 services:
   web:
-    image: gongji-crm-web:${TAG:-latest}
+    image: kaijing-web:${TAG:-latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -15,7 +15,7 @@ services:
         BUILD_TARGET: web
 
   docs:
-    image: gongji-crm-docs:${TAG:-latest}
+    image: kaijing-docs:${TAG:-latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -24,7 +24,7 @@ services:
         BUILD_TARGET: docs
 
   api:
-    image: gongji-crm-api:${TAG:-latest}
+    image: kaijing-api:${TAG:-latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -33,7 +33,7 @@ services:
         BUILD_TARGET: api
 
   all:
-    image: gongji-crm:${TAG:-latest}
+    image: kaijing:${TAG:-latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile

@@ -11,7 +11,7 @@
  *   PLATFORM_ADMIN_NAME       默认 Platform Admin
  *   PLATFORM_ADMIN_ORG_ID     默认 org_platform_main
  *   PLATFORM_ADMIN_ORG_SLUG   默认 platform（organization.slug 唯一键，幂等定位用）
- *   PLATFORM_ADMIN_ORG_NAME   默认 OpenShop Platform
+ *   PLATFORM_ADMIN_ORG_NAME   默认 开镜平台
  *
  * 说明：
  * - 本地 apps 运行库是 studio@127.0.0.1:5434（apps/web/.env），而根 .env 的
@@ -44,7 +44,7 @@ const PASSWORD = process.env.PLATFORM_ADMIN_PASSWORD || null
 const NAME = process.env.PLATFORM_ADMIN_NAME?.trim() || 'Platform Admin'
 const ORG_ID = process.env.PLATFORM_ADMIN_ORG_ID?.trim() || 'org_platform_main'
 const ORG_SLUG = process.env.PLATFORM_ADMIN_ORG_SLUG?.trim() || 'platform'
-const ORG_NAME = process.env.PLATFORM_ADMIN_ORG_NAME?.trim() || 'OpenShop Platform'
+const ORG_NAME = process.env.PLATFORM_ADMIN_ORG_NAME?.trim() || '开镜平台'
 
 /** 与 better-auth @better-auth/utils/password 的 scrypt 格式保持一致：`${salt}:${key}`（hex） */
 function hashPassword(password: string): string {
