@@ -2,7 +2,7 @@
 
 开镜（Kaijing）是开源 AI 短剧 / 漫剧制作工具。仓库 `openroute-ai/vercelai-kaijing`，平台域名 vercelai.cn。
 
-一期是桌面客户端加薄云：登录、积分、统一生成网关。工作台用 Vite，不要改写成 Next.js。不要把 BeatDesign、Toonflow 或火宝短剧的源码拷进这个仓库。火宝短剧是 CC BY-NC-SA 4.0，不能复制其代码。
+一期是桌面客户端加薄云：登录、积分、统一生成网关。工作台用 Vite，不要改写成 Next.js。`apps/workspace` 已经按 Apache-2.0 引入上游画布副本，见 `apps/workspace/UPSTREAM.md`。不要再引入 Toonflow 的 Vue 界面。火宝短剧是 CC BY-NC-SA 4.0，不能复制其代码。
 
 ## 技术栈
 

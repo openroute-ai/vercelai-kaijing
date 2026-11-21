@@ -6,7 +6,7 @@
 桌面客户端
   Electron 壳
   Vite + React 工作台
-  本机项目、画布、时间线、导出（M0 只有空壳）
+  本机项目、画布、时间线（画布与创作台已可在本地打开）
         │
         │ 登录 / 积分 / 提交生成
         ▼
@@ -23,12 +23,12 @@
 
 | 层 | 现在 | 约束 |
 | --- | --- | --- |
-| `apps/workspace` | 欢迎页和空项目列表 | 不写成 Next.js，不持有供应商密钥 |
+| `apps/workspace` | 上游画布副本，本机 SQLite | 不写成 Next.js，不持有供应商密钥 |
 | `apps/desktop` | 开发时加载工作台 URL | 安装包和自动更新以后再做 |
 | `packages/drama-core` | 领域类型和命令内核占位 | UI、导演、MCP 以后共用 |
 | `packages/providers` | `GenerationProvider` 占位 | 只部署在云网关 |
 | `apps/api` | `POST /api/v1/generations` 落一条 `queued` 任务 | 不转发到厂商 |
-| `apps/web` | 登录、用户、邀请、积分、任务列表 | 不编辑短剧项目 |
+| `apps/web` | 平台运营登录（`web` cookie） | 不编辑短剧项目，不和 cloud 会话共用 |
 | `packages/db` | auth 表 + `credit_*` + `generation_jobs` | 不成片、不分镜表 |
 
 ## 领域对象

@@ -15,7 +15,7 @@ function newId(): string {
 
 /**
  * 该 realm 下所有可持有密码的凭证 providerId。
- * 找回密码只能改动本 realm 的凭证，避免 gpus/merchant/supplier/web 互相覆盖密码。
+ * 找回密码只能改动本 realm 的凭证，避免 cloud/merchant/supplier/web 互相覆盖密码。
  */
 export function getRealmPasswordProviderIds(realm: Realm): string[] {
   const { email, phone } = REALM_PROVIDERS[realm]

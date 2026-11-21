@@ -1,0 +1,10 @@
+开镜（Kaijing）仓库整体以 LGPL-2.1 授权，见根目录 LICENSE。
+
+apps/workspace 包含 BeatDesign 的源码副本：
+
+- 项目：https://github.com/BeatAPI/BeatDesign
+- 提交：174e652451a3533c20462acb7380008428670ff6
+- 版权：Copyright 2026 BeatAPI
+- 许可：Apache License 2.0，见 apps/workspace/LICENSE
+
+界面里的产品名是开镜。BeatDesign 只作为上游项目名出现在归属说明中。

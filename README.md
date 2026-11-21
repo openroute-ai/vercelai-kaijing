@@ -4,13 +4,13 @@
 
 一期面向普通用户的交付是 **Windows / macOS 桌面客户端 + 薄云**。薄云只做登录、积分和统一生成网关。完整浏览器工作台放在二期。
 
-当前仓库处于 **M0**：把原来的跨境电商单体收成可复用基建，并放上工作台、桌面壳和领域类型的骨架。导演、画布、时间线和真实供应商调用都还没做。
+工作台是上游画布的 Apache-2.0 源码副本（提交 `174e652451a3533c20462acb7380008428670ff6`，见 `apps/workspace/UPSTREAM.md` 和 `NOTICE`）。产品名是开镜。短剧导演和真实供应商调用还没做。
 
 ## 架构
 
 ```text
 apps/desktop        Electron 壳。开发时打开本机工作台
-apps/workspace      Vite + React 工作台 UI（不是 Next.js）
+apps/workspace      Vite + React 本机工作台（画布 / 创作台 / 素材，不是 Next.js）
 apps/web            Next.js 薄云控制台：登录、账户、积分、生成任务
 apps/api            Hono OpenAPI：健康检查 + 生成任务占位
 apps/docs           Fumadocs 文档站
@@ -41,7 +41,7 @@ flowchart LR
 
 | 层 | 技术 |
 | --- | --- |
-| 工作台 | Vite、React 19、Tailwind CSS v4、`@workspace/ui` |
+| 工作台 | Vite 8、TanStack Start、React 19、Tailwind CSS v4、本机 SQLite |
 | 桌面壳 | Electron |
 | 薄云 / 文档 | Next.js 16 |
 | API | Hono 4 + zod-openapi |
@@ -60,12 +60,15 @@ docker compose up -d
 pnpm --filter @workspace/db db:migrate
 ```
 
-工作台（浏览器）：
+工作台（浏览器）。第一次会准备本机 SQLite：
 
 ```bash
+pnpm --filter workspace db:push
 pnpm --filter workspace dev
-# http://127.0.0.1:5173
+# http://127.0.0.1:3020
 ```
+
+首页可以进创作台和画布。云端账户在 http://127.0.0.1:3020/cloud-account ，请求会由 Vite 转发到 `http://127.0.0.1:8080`。
 
 桌面壳（先启动工作台，再开另一个终端）：
 
@@ -73,13 +76,18 @@ pnpm --filter workspace dev
 pnpm --filter desktop dev
 ```
 
-桌面进程会加载 `KAIJING_WORKSPACE_URL`，默认 `http://127.0.0.1:5173`。
+桌面进程会加载 `KAIJING_WORKSPACE_URL`，默认 `http://127.0.0.1:3020`。
+
+两套登录：
+
+- 桌面 / 工作台用户：`cloud` realm，cookie 名 `cloud.session_token`。接口是 `POST /api/v1/cloud/register` 和 `POST /api/v1/cloud/login`。
+- 平台运营：`apps/web`，cookie 前缀 `web`，数据在 `web_auth` schema，不和桌面会话共用。
 
 薄云控制台与 API：
 
 ```bash
-pnpm --filter web dev     # http://localhost:30051
-pnpm --filter api dev     # http://localhost:8080
+pnpm --filter web dev     # http://localhost:30051  平台运营
+pnpm --filter api dev     # http://localhost:8080   云端账户和生成网关
 pnpm --filter doc dev     # http://localhost:6969
 ```
 
@@ -113,9 +121,9 @@ pnpm --filter @workspace/db db:seed:admin
 - 一期架构：[docs/design/phase-1.md](docs/design/phase-1.md)
 - 开发约定：[AGENTS.md](AGENTS.md)
 
-## M0 不做
+## 这一版不做
 
-- 不内置导演，不拆剧本，不出图，不出视频，不导出 MP4
-- 不把 BeatDesign、Toonflow 或火宝短剧的源码拷进仓库
+- 不内置短剧导演，不拆剧本，不把生成接到真实供应商，不导出成片
+- 不引入 Toonflow 的 Vue 界面，不复制火宝短剧源码
 - 不把工作台改写成 Next.js
 - 不做完整的浏览器多人协作工作台

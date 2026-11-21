@@ -39,6 +39,34 @@ function serializeCookie(name: string, value: string, attrs: CookieAttributes): 
   return cookie
 }
 
+export const CLOUD_SESSION_COOKIE = 'cloud.session_token'
+
+function safeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false
+  let diff = 0
+  for (let index = 0; index < left.length; index += 1) {
+    diff |= left.charCodeAt(index) ^ right.charCodeAt(index)
+  }
+  return diff === 0
+}
+
+/** 校验 `signSessionCookie` 写入的值，失败返回 null。 */
+export async function unsignCookieValue(signed: string, secret: string): Promise<string | null> {
+  let decoded = signed
+  try {
+    decoded = decodeURIComponent(signed)
+  } catch {
+    return null
+  }
+  const dot = decoded.lastIndexOf('.')
+  if (dot <= 0) return null
+  const value = decoded.slice(0, dot)
+  const signature = decoded.slice(dot + 1)
+  const expected = await makeSignature(value, secret)
+  if (!safeEqual(signature, expected)) return null
+  return value
+}
+
 export async function signSessionCookie(
   cookieName: string,
   token: string,

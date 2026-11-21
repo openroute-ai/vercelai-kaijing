@@ -96,8 +96,8 @@ export const websiteConfig = {
   },
   mail: {
     provider: 'nodemailer' as const,
-    fromEmail: 'GPURun Cloud <service@gpurun.cn>',
-    supportEmail: 'GPURun Cloud <service@gpurun.cn>',
+    fromEmail: '开镜 <hello@vercelai.cn>',
+    supportEmail: '开镜 <hello@vercelai.cn>',
   },
   newsletter: {
     provider: 'nodemailer' as const,

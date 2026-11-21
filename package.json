@@ -33,7 +33,6 @@
     "overrides": {
       "next": "16.3.6",
       "recharts": "3.10.1",
-      "lucide-react": "1.61.0",
       "zod": "4.6.7"
     },
     "patchedDependencies": {

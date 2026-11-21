@@ -7,7 +7,7 @@ type Database = any
 
 export const REALM_PROVIDERS = {
   merchant: { email: 'merchant-email', phone: 'merchant-phoneNumber' },
-  gpus: { email: 'gpus-email', phone: 'gpus-phoneNumber' },
+  cloud: { email: 'cloud-email', phone: 'cloud-phoneNumber' },
   supplier: { email: 'supplier-email', phone: 'supplier-phoneNumber' },
   web: { email: 'web-email', phone: 'web-phoneNumber' },
 } as const
@@ -60,7 +60,7 @@ export async function realmSignUp(params: {
     await params.db.insert(user).values({
       id: userId,
       name: params.name,
-      email: params.email ?? `${params.phoneNumber}@${params.realm}.gpurun.cn`,
+      email: params.email ?? `${params.phoneNumber}@${params.realm}.vercelai.cn`,
       emailVerified: !!params.email,
       phoneNumber: params.phoneNumber ?? null,
       phoneNumberVerified: !!params.phoneNumber,

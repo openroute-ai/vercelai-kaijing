@@ -15,6 +15,7 @@ import { AUTH_PATH } from "./lib/auth-path"
 import health from "./routes/health"
 import hello from "./routes/hello"
 import generations from "./routes/generations"
+import cloudAuth from "./routes/cloud-auth"
 
 const app = new Hono()
 const apiV1 = new OpenAPIHono()
@@ -59,13 +60,14 @@ app.all(`${AUTH_PATH}/*`, () => auth.handler())
 apiV1.route("/health", health)
 apiV1.route("/hello", hello)
 apiV1.route("/generations", generations)
+apiV1.route("/cloud", cloudAuth)
 
 apiV1.doc("/open-api", {
   openapi: "3.0.0",
   info: {
     version: "0.1.0",
     title: "开镜 API",
-    description: "薄云控制面：健康检查与生成任务占位。登录仍是 501 占位。",
+    description: "薄云控制面：cloud 账户、积分和生成任务占位。平台运营登录在 apps/web，不共用这套 cookie。",
   },
 })
 

@@ -12,8 +12,8 @@ import {
 /**
  * better-auth 身份表的列定义工厂（单一事实来源）。
  *
- * public schema（auth-schema.ts，shop 等租户侧共用）与 web_auth schema
- * （web-auth-schema.ts，apps/web 平台管理员专用，与租户用户物理隔离）
+ * public schema（auth-schema.ts，桌面 / 薄云用户）与 web_auth schema
+ * （web-auth-schema.ts，apps/web 平台管理员专用，与云端用户物理隔离）
  * 各自实例化同一套列定义，避免两处列定义漂移。
  *
  * 含外键的表通过参数接收目标表，保证 FK 落在各自 schema 内：

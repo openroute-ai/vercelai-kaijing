@@ -12,8 +12,8 @@
   "AuthPage": {
     "login": {
       "title": "登录",
-      "welcomeBack": "欢迎回来",
-      "description": "登录您的账号以继续",
+      "welcomeBack": "平台运营登录",
+      "description": "这里只登录平台运营账号。桌面用户请在工作台的云端账户页注册。",
       "email": "邮箱",
       "password": "密码",
       "rememberMe": "记住我",
@@ -31,8 +31,8 @@
     },
     "phoneLogin": {
       "title": "手机号登录",
-      "welcomeBack": "欢迎回来",
-      "description": "请输入您的手机号登录",
+      "welcomeBack": "平台运营登录",
+      "description": "这里只登录平台运营账号，不进入桌面用户的云端账户。",
       "phoneNumber": "手机号",
       "verificationCode": "验证码",
       "sendCode": "发送验证码",

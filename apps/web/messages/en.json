@@ -11,8 +11,8 @@
   "AuthPage": {
     "login": {
       "title": "Login",
-      "welcomeBack": "Welcome back",
-      "description": "Sign in to your account to continue",
+      "welcomeBack": "Platform admin",
+      "description": "This login is only for platform operators. Desktop users register on the workspace cloud account page.",
       "email": "Email",
       "password": "Password",
       "rememberMe": "Remember me",
@@ -30,8 +30,8 @@
     },
     "phoneLogin": {
       "title": "Phone Login",
-      "welcomeBack": "Welcome back",
-      "description": "Please enter your phone number to sign in",
+      "welcomeBack": "Platform admin",
+      "description": "This login is only for platform operators, not desktop cloud accounts.",
       "phoneNumber": "Phone Number",
       "verificationCode": "Verification Code",
       "sendCode": "Send Code",

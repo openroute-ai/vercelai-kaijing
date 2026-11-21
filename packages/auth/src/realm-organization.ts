@@ -1,5 +1,5 @@
 export const APP_ORGANIZATION_TYPE = {
-  gpus: 'tenant',
+  cloud: 'tenant',
   merchant: 'merchant',
   supplier: 'supplier',
   web: 'platform',

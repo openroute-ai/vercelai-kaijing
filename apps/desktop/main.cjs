@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require("electron")
 
-const DEFAULT_WORKSPACE_URL = "http://127.0.0.1:5173"
+const DEFAULT_WORKSPACE_URL = "http://127.0.0.1:3020"
 
 function workspaceUrl() {
   const configured = process.env.KAIJING_WORKSPACE_URL

@@ -152,18 +152,18 @@ function tableNameOf(table: unknown): 'user' | 'account' | 'verification' {
 
 const USER_ID = 'user-1'
 const OLD_HASH = 'old-hash'
-const RESET_URL_BASE = 'https://gpus.example.com'
+const RESET_URL_BASE = 'https://cloud.example.com'
 
 /** 同一 userId 在四端都持有密码凭证——这正是跨端改密串联的根因场景。 */
 function seedMultiRealmUser(): Dataset {
   return {
     user: [{ id: USER_ID, name: '张三', email: 'shared@example.com' }],
     account: [
-      { id: 'acc-gpus-email', userId: USER_ID, providerId: 'gpus-email', password: OLD_HASH },
+      { id: 'acc-cloud-email', userId: USER_ID, providerId: 'cloud-email', password: OLD_HASH },
       {
-        id: 'acc-gpus-phone',
+        id: 'acc-cloud-phone',
         userId: USER_ID,
-        providerId: 'gpus-phoneNumber',
+        providerId: 'cloud-phoneNumber',
         password: OLD_HASH,
       },
       {
@@ -192,15 +192,15 @@ test('找回密码只更新本 realm 的凭证，不波及其他应用', async (
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  const request = await createPasswordResetRequest(db, 'shared@example.com', RESET_URL_BASE, 'gpus')
+  const request = await createPasswordResetRequest(db, 'shared@example.com', RESET_URL_BASE, 'cloud')
   assert.ok(request)
 
-  const ok = await resetPasswordWithToken(db, request.token, 'new-password', 'gpus')
+  const ok = await resetPasswordWithToken(db, request.token, 'new-password', 'cloud')
   assert.equal(ok, true)
 
   // 本 realm 的两个凭证都已改密
-  assert.notEqual(passwordOf(dataset, 'acc-gpus-email'), OLD_HASH)
-  assert.notEqual(passwordOf(dataset, 'acc-gpus-phone'), OLD_HASH)
+  assert.notEqual(passwordOf(dataset, 'acc-cloud-email'), OLD_HASH)
+  assert.notEqual(passwordOf(dataset, 'acc-cloud-phone'), OLD_HASH)
 
   // 其他应用的凭证保持原样（修复前会全部被改写）
   assert.equal(passwordOf(dataset, 'acc-merchant'), OLD_HASH)
@@ -213,19 +213,19 @@ test('找回密码令牌绑定签发它的 realm，无法跨端重放', async ()
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  const gpusRequest = await createPasswordResetRequest(
+  const cloudRequest = await createPasswordResetRequest(
     db,
     'shared@example.com',
     RESET_URL_BASE,
-    'gpus'
+    'cloud'
   )
-  assert.ok(gpusRequest)
+  assert.ok(cloudRequest)
   const before = passwordSnapshot(dataset)
 
-  // 拿 gpus 签发的令牌去 merchant 端重置密码：必须失败且不改动任何密码
+  // 拿 cloud 签发的令牌去 merchant 端重置密码：必须失败且不改动任何密码
   const replayed = await resetPasswordWithToken(
     db,
-    gpusRequest.token,
+    cloudRequest.token,
     'attacker-password',
     'merchant'
   )
@@ -233,15 +233,15 @@ test('找回密码令牌绑定签发它的 realm，无法跨端重放', async ()
   assert.deepEqual(passwordSnapshot(dataset), before)
 
   // 同一令牌在本 realm 可以正常使用
-  assert.equal(await validatePasswordResetToken(db, gpusRequest.token, 'gpus'), USER_ID)
-  assert.equal(await validatePasswordResetToken(db, gpusRequest.token, 'supplier'), null)
+  assert.equal(await validatePasswordResetToken(db, cloudRequest.token, 'cloud'), USER_ID)
+  assert.equal(await validatePasswordResetToken(db, cloudRequest.token, 'supplier'), null)
 })
 
 test('用户在本 realm 没有密码凭证时不签发令牌', async () => {
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  // 该用户只有 gpus 凭证，supplier 端找回密码不应发信
+  // 该用户只有 cloud 凭证，supplier 端找回密码不应发信
   const supplierRequest = await createPasswordResetRequest(
     db,
     'shared@example.com',
@@ -256,11 +256,11 @@ test('令牌按 realm 分别签发，互不覆盖', async () => {
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  const gpusRequest = await createPasswordResetRequest(
+  const cloudRequest = await createPasswordResetRequest(
     db,
     'shared@example.com',
     RESET_URL_BASE,
-    'gpus'
+    'cloud'
   )
   const merchantRequest = await createPasswordResetRequest(
     db,
@@ -268,9 +268,9 @@ test('令牌按 realm 分别签发，互不覆盖', async () => {
     RESET_URL_BASE,
     'merchant'
   )
-  assert.ok(gpusRequest)
+  assert.ok(cloudRequest)
   assert.ok(merchantRequest)
-  assert.notEqual(gpusRequest.token, merchantRequest.token)
+  assert.notEqual(cloudRequest.token, merchantRequest.token)
   assert.equal(dataset.verification.length, 2)
 
   // 重签同 realm 令牌时只作废该 realm 的旧令牌
@@ -278,11 +278,11 @@ test('令牌按 realm 分别签发，互不覆盖', async () => {
     db,
     'shared@example.com',
     RESET_URL_BASE,
-    'gpus'
+    'cloud'
   )
   assert.ok(renewed)
   assert.equal(dataset.verification.length, 2)
-  assert.equal(await validatePasswordResetToken(db, gpusRequest.token, 'gpus'), null)
+  assert.equal(await validatePasswordResetToken(db, cloudRequest.token, 'cloud'), null)
   assert.ok(await validatePasswordResetToken(db, merchantRequest.token, 'merchant'))
 })
 
@@ -290,7 +290,7 @@ test('过期令牌无法重置密码', async () => {
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  const request = await createPasswordResetRequest(db, 'shared@example.com', RESET_URL_BASE, 'gpus')
+  const request = await createPasswordResetRequest(db, 'shared@example.com', RESET_URL_BASE, 'cloud')
   assert.ok(request)
   const before = passwordSnapshot(dataset)
 
@@ -298,7 +298,7 @@ test('过期令牌无法重置密码', async () => {
   assert.ok(tokenRow, '应写入 verification 记录')
   tokenRow.expiresAt = new Date(Date.now() - 1000)
 
-  assert.equal(await resetPasswordWithToken(db, request.token, 'new-password', 'gpus'), false)
+  assert.equal(await resetPasswordWithToken(db, request.token, 'new-password', 'cloud'), false)
   assert.deepEqual(passwordSnapshot(dataset), before)
 })
 
@@ -306,18 +306,18 @@ test('未注册的邮箱不签发令牌', async () => {
   const dataset = seedMultiRealmUser()
   const db = createFakeDb(dataset)
 
-  const request = await createPasswordResetRequest(db, 'nobody@example.com', RESET_URL_BASE, 'gpus')
+  const request = await createPasswordResetRequest(db, 'nobody@example.com', RESET_URL_BASE, 'cloud')
   assert.equal(request, null)
   assert.equal(dataset.verification.length, 0)
 })
 
 test('各 realm 的密码凭证互不相交', () => {
-  const providerIds = (['gpus', 'merchant', 'supplier', 'web'] as const).map(
+  const providerIds = (['cloud', 'merchant', 'supplier', 'web'] as const).map(
     getRealmPasswordProviderIds
   )
   const flattened = providerIds.flat()
   assert.equal(new Set(flattened).size, flattened.length, 'realm 之间的 providerId 存在重叠')
-  assert.deepEqual(getRealmPasswordProviderIds('gpus'), ['gpus-email', 'gpus-phoneNumber'])
+  assert.deepEqual(getRealmPasswordProviderIds('cloud'), ['cloud-email', 'cloud-phoneNumber'])
 })
 
 test('令牌标识携带 realm 且能正确解析', () => {

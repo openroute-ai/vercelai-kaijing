@@ -17,7 +17,7 @@ test('selects the organization type required by the login app', () => {
   }
 
   assert.equal(
-    selectRealmOrganization([merchant, tenant], 'gpus')?.organizationId,
+    selectRealmOrganization([merchant, tenant], 'cloud')?.organizationId,
     tenant.organizationId
   )
   assert.equal(
