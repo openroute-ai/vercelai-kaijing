@@ -27,7 +27,7 @@ flowchart TD
 
 1. 用户从 vercelai.cn 下载安装包（M6）。开发期用 `pnpm --filter desktop dev`，窗口加载 `http://127.0.0.1:3020`。
 2. 应用打开后不要求用户装 Node，也不打开终端。
-3. 没有 `cloud.session_token` 时，进入工作台里的「云端账户」而不是 `apps/web` 的运营登录。注册走 `POST /api/v1/cloud/register`，登录走 `POST /api/v1/cloud/login`。成功后本机只保存会话用途，不把项目上传。
+3. 没有 `cloud.session_token` 时，进入工作台里的「云端账户」而不是 `apps/web` 的运营登录。注册走 `POST /api/v1/cloud/register`，登录走 `POST /api/v1/cloud/login`。这两个路径是 better-auth 的薄包装，cookie 由 `cloud` 这套 better-auth 签发。运营登录和注册走 `apps/web` 里另一份 better-auth，cookie 前缀是 `web`。成功后本机只保存会话用途，不把项目上传。
 4. 首页沿用现在的项目列表。新建项目仍是现有的本地项目，短剧数据挂在这个 `projectId` 上。
 5. 用户在短剧面板输入一句话，或粘贴更长的小说，选择集标题和画质档位（快速 / 标准），点「做一集」。
 6. 内置导演按 [commands.md](commands.md) 的顺序调用命令。每一步完成后面板展示结果，用户可以改剧本、改名字、删一镜、换参考图，再从该步继续。

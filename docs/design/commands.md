@@ -4,6 +4,8 @@
 
 现有内核继续负责这些类型（名称保持不变）：`project.update`、`canvas.apply`、`upsert_card`、`place_card`、`set_references`、`editor.apply`、`add_clip`、`trim_clip`、`move_clip`、`upsert_caption`、`import_srt`、`set_render`。短剧层不替换它们。
 
+M1 的手写保存不调用模型，也不走上面的导演命令。工作台用 `drama.save_script` 和 `drama.save_storyboard` 把已通过 `packages/drama-core` 校验的稿写入本机表。界面只请求 HTTP，由持久化模块在事务里写入，不在组件里打开 SQLite。保存后 `drama_projects.current_script_id` 和 `current_storyboard_id` 指向这一稿。再保存同一稿时 `drama_scripts.revision` 加一。空描述的镜头拒绝写入。
+
 M0 的 `createStubCommandKernel()` 对下列名字一律返回未实现。M2 起逐个换成真实现。失败形态与现有内核对齐：调用方能区分「输入不合法」「找不到」「修订冲突」「执行失败」。
 
 ## 1. 命令一览

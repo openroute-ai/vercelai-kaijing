@@ -26,6 +26,7 @@
 - `cloud` realm 与 `apps/web` 的 `web` 会话分开；`gpus` 已改名为 `cloud`
 - `credit_accounts`、`credit_ledger`、`generation_jobs` 和排队占位接口已在
 - `packages/drama-core` 的类型和会拒绝执行的命令内核已在
+- M1 已开始：本机 `drama_*` 表、手写剧本和分镜的校验，以及不调用模型的短剧面板。导演命令仍然拒绝执行
 - `packages/providers` 的 `createStubProvider()` 已在
 
 ## 3. M1 到 M6

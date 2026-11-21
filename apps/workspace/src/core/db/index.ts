@@ -22,3 +22,10 @@ export async function db() {
 
 export type { DbConfig } from './types';
 export { createDb, closeDb } from './create-db';
+
+/** Drop the cached connection so the next read opens the same file again. */
+export async function resetLocalDbForTests() {
+  const { closeSqliteDb } = await import('./sqlite');
+  dbInstance = null;
+  await closeSqliteDb();
+}

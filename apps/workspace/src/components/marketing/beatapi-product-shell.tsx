@@ -43,6 +43,7 @@ function getNavItems(copy: ShellCopy) {
     { label: copy.create, href: '/studio' },
     { label: copy.projects, href: '/projects' },
     { label: '云端账户', href: '/cloud-account' },
+    { label: '短剧', href: '/drama' },
   ] as const;
 }
 

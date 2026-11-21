@@ -18,7 +18,7 @@
 
 ## 2. 本机表
 
-表名使用 `drama_` 前缀，避免和现有项目表冲突。标识用文本 UUID。时间用带时区的时间戳。下面是 M1 要落地的列，实现时用工作台自己的 Drizzle SQLite 配置生成迁移，不要写进 `packages/db` 的 Postgres 迁移。
+表名使用 `drama_` 前缀，避免和现有项目表冲突。标识用文本 UUID。工作台 SQLite 的时间沿用现有的整数毫秒，不单独引入带时区的文本时间。镜头顺序的列名是 `index`。下面是 M1 要落地的列，实现时用工作台自己的 Drizzle SQLite，不要写进 `packages/db` 的 Postgres 迁移。
 
 ### drama_scripts
 
@@ -103,8 +103,8 @@
 
 Postgres 继续只用这些业务表：
 
-- `users` / `account` / `session`：桌面用户在 public schema，密码凭证的 `provider_id` 是 `cloud-email` 或 `cloud-phoneNumber`
-- `web_auth.*`：平台运营，cookie 前缀 `web`
+- `users` / `account` / `session`：桌面用户在 public schema。产品注册登录只走 better-auth，密码凭证的 `provider_id` 是 `credential`。cookie 前缀 `cloud`
+- `web_auth.*`：平台运营的另一份 better-auth，cookie 前缀 `web`
 - `credit_accounts.balance`：`numeric(15,4)`，一个用户一行
 - `credit_ledger`：`delta`、`reason`（`grant`、`hold`、`capture`、`release`、`adjust`）、可选 `generation_job_id`
 - `generation_jobs`：`provider`、`kind`（`text`、`image`、`video`）、`status`、`prompt`、`request_json`、`result_json`、`credit_cost`

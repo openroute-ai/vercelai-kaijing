@@ -6,12 +6,14 @@
 
 ## 1. 身份
 
-| 入口 | realm / 库 | cookie | 谁用 |
+| 入口 | 实现 | cookie | 谁用 |
 | --- | --- | --- | --- |
-| `POST /api/v1/cloud/register`、`/login`、`/logout`，`GET /api/v1/cloud/session` | `cloud`，public schema，凭证 `cloud-email` / `cloud-phoneNumber` | `cloud.session_token` | 桌面和工作台 |
-| `apps/web` 的 better-auth | `web_auth` schema | 前缀 `web` | 平台运营 |
+| `POST /api/v1/cloud/register`、`/login`、`/logout`，`GET /api/v1/cloud/session` | 薄包装。注册和登录转到同一进程的 better-auth：`POST /api/auth/sign-up/email`、`POST /api/auth/sign-in/email`。会话和退出转到 `/api/auth/get-session`、`/api/auth/sign-out`。实例由 `createAuth` 建在 public schema 上，`cookiePrefix` 为 `cloud` | `cloud.session_token`，由 better-auth 签发 | 桌面和工作台 |
+| `apps/web` | 另一份 better-auth。邮箱登录是 `signIn.email`，受邀手机号注册是 `phoneNumber` 插件。公开邮箱注册页关闭，关闭动作在 better-auth 插件里，不是另一套密码 | 前缀 `web`，库是 `web_auth` | 平台运营 |
 
-两边不接受对方的 cookie。`merchant` 和 `supplier` 不再作为登录入口；历史列可以留在认证表里。
+两条产品路径都只走 better-auth。不要用自签 JWT、`signSessionCookie`，或 `realmSignUp` / `realmSignIn` 给用户或运营建会话。密码账户的 `provider_id` 是 better-auth 的 `credential`。历史辅助函数里的 `cloud-email` 只留在旧测试里，产品注册登录不写它。
+
+两边不接受对方的 cookie。`merchant` 和 `supplier` 不再作为登录入口；历史列可以留在认证表里。`CLOUD_AUTH_URL` 缺省是 API 自己的地址，不要填成 `apps/web` 的 `BETTER_AUTH_URL`。
 
 注册成功时已经会创建 `credit_accounts` 行，余额为 0。M4 之前可以由运营在后台 `grant`。密码规则沿用 `validatePassword`：至少 8 位，含大小写、数字和符号。
 

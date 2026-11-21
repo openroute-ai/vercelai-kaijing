@@ -384,6 +384,159 @@ export const projectAssetMembership = sqliteTable(
   ]
 );
 
+const dramaTimestamp = integer('updated_at', { mode: 'timestamp_ms' })
+  .default(sqliteNowMs)
+  .notNull();
+
+export const dramaProjects = sqliteTable('drama_projects', {
+  projectId: text('project_id')
+    .primaryKey()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  currentScriptId: text('current_script_id'),
+  currentStoryboardId: text('current_storyboard_id'),
+  quality: text('quality').notNull().default('standard'),
+  updatedAt: dramaTimestamp,
+});
+
+export const dramaScripts = sqliteTable(
+  'drama_scripts',
+  {
+    id: text('id').primaryKey(),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    title: text('title').notNull().default(''),
+    sourceKind: text('source_kind').notNull().default('one_liner'),
+    sourceText: text('source_text').notNull().default(''),
+    body: text('body').notNull().default(''),
+    revision: integer('revision').notNull().default(1),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [index('drama_scripts_project_idx').on(table.projectId)]
+);
+
+export const dramaCharacters = sqliteTable('drama_characters', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  visualNotes: text('visual_notes').notNull().default(''),
+  assetId: text('asset_id'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+});
+
+export const dramaScenes = sqliteTable('drama_scenes', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  visualNotes: text('visual_notes').notNull().default(''),
+  assetId: text('asset_id'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+});
+
+export const dramaProps = sqliteTable('drama_props', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  visualNotes: text('visual_notes').notNull().default(''),
+  assetId: text('asset_id'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+});
+
+export const dramaStoryboards = sqliteTable('drama_storyboards', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  scriptId: text('script_id').references(() => dramaScripts.id, {
+    onDelete: 'set null',
+  }),
+  title: text('title').notNull().default(''),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+});
+
+export const dramaShots = sqliteTable(
+  'drama_shots',
+  {
+    id: text('id').primaryKey(),
+    storyboardId: text('storyboard_id')
+      .notNull()
+      .references(() => dramaStoryboards.id, { onDelete: 'cascade' }),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    index: integer('index').notNull(),
+    description: text('description').notNull().default(''),
+    dialogue: text('dialogue').notNull().default(''),
+    durationMs: integer('duration_ms').notNull().default(4000),
+    imagePrompt: text('image_prompt'),
+    videoPrompt: text('video_prompt'),
+    referenceAssetIds: jsonText('reference_asset_ids'),
+    status: text('status').notNull().default('draft'),
+    imageAssetId: text('image_asset_id'),
+    videoAssetId: text('video_asset_id'),
+    errorMessage: text('error_message'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex('drama_shots_storyboard_index').on(table.storyboardId, table.index),
+  ]
+);
+
+export const dramaRuns = sqliteTable('drama_runs', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('paused'),
+  cursor: text('cursor'),
+  errorMessage: text('error_message'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .default(sqliteNowMs)
+    .notNull(),
+});
+
 export type Config = typeof config.$inferSelect;
 export type Project = typeof project.$inferSelect;
 export type NewProject = typeof project.$inferInsert;

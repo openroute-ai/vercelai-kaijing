@@ -118,13 +118,20 @@ pnpm --filter @workspace/db db:seed:admin
 ## 文档
 
 - 功能设计（三份上游怎么做成开镜，含路径、领域、命令和里程碑）：[docs/design/INDEX.md](docs/design/INDEX.md)
+- 协作三档（本轮只写设计，一期仍是单人）：[docs/design/collaboration.md](docs/design/collaboration.md)
 - 文档索引：[docs/README.md](docs/README.md)
 - 一期架构简图：[docs/design/phase-1.md](docs/design/phase-1.md)
 - 开发约定：[AGENTS.md](AGENTS.md)
 
+## 这一版做到哪
+
+- 桌面用户和平台运营的注册、登录都走 better-auth。`/api/v1/cloud/register` 与 `/login` 是 `cloud` 实例的薄包装；`apps/web` 使用 `web` cookie 和 `web_auth`，两套会话不共用
+- 工作台 `/drama` 可以手写一稿剧本和一版分镜，写入本机 SQLite 的 `drama_*` 表。不调用模型
+- 协作只写了设计，见 `docs/design/collaboration.md`
+
 ## 这一版不做
 
-- 不内置短剧导演，不拆剧本，不把生成接到真实供应商，不导出成片
+- 不内置短剧导演，不调用模型改写，不把生成接到真实供应商，不导出成片
 - 不引入 Toonflow 的 Vue 界面，不复制火宝短剧源码
 - 不把工作台改写成 Next.js
-- 不做完整的浏览器多人协作工作台
+- 不做导出互传、只读分享或同时编辑

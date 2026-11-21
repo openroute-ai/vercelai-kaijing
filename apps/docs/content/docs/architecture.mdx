@@ -19,4 +19,4 @@ description: 桌面客户端与薄云怎么分工
 ## 数据
 
 - 本机项目、画布和时间线用 SQLite 和本地文件。短剧剧本和分镜也写在这份库里，不进 Postgres。
-- 云端 Postgres 只放账户、`credit_accounts` / `credit_ledger` 和 `generation_jobs`。桌面用户是 `cloud` 会话，运营后台是另一套 `web` 会话。
+- 云端 Postgres 只放账户、`credit_accounts` / `credit_ledger` 和 `generation_jobs`。桌面用户和运营后台都用 better-auth，分别是 `cloud` 会话和 `web` 会话。协作三档见仓库 `docs/design/collaboration.md`，一期不实现。

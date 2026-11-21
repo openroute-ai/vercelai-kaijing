@@ -92,8 +92,8 @@ function CloudAccountPage() {
       </a>
       <h1 className="text-3xl font-semibold">云端账户</h1>
       <p className="text-sm leading-6 text-white/70">
-        桌面和工作台用户在这里注册、登录薄云。会话 cookie 是
-        cloud.session_token，和平台运营后台的 web.session_token 分开。
+        桌面和工作台用户在这里注册、登录。请求由 better-auth 签发
+        cloud.session_token，和平台运营后台的 web 会话分开。
       </p>
       <form className="flex flex-col gap-3" onSubmit={submitAccount}>
         {mode === 'register' ? (

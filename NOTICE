@@ -8,3 +8,5 @@ apps/workspace 包含 BeatDesign 的源码副本：
 - 许可：Apache License 2.0，见 apps/workspace/LICENSE
 
 界面里的产品名是开镜。BeatDesign 只作为上游项目名出现在归属说明中。
+
+短剧里的剧本、分镜和资产卡这一类交互语义参考 Toonflow（MIT），由开镜用 React 重写。本仓库不包含 Toonflow 的 Vue 源码。

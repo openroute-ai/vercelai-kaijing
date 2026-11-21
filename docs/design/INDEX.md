@@ -10,8 +10,9 @@
 | [domain.md](domain.md) | 领域对象，以及本机 SQLite 和薄云 Postgres 的边界 |
 | [commands.md](commands.md) | 短剧命令、画布节点、`@` 引用、导演技能和 MCP |
 | [cloud.md](cloud.md) | 薄云 API、积分和 `GenerationProvider` 合同 |
+| [collaboration.md](collaboration.md) | 导出互传、只读分享、同时编辑，以及相对现在的改动大小 |
 | [license-and-backlog.md](license-and-backlog.md) | 许可、归属、M0–M6 和明确不做的事 |
 
-阅读顺序：先 `sources.md` 和 `journeys.md`，再按 `domain.md` → `commands.md` → `cloud.md` 实现。`license-and-backlog.md` 用来判断某一段代码能不能进仓库、该落在哪一阶段。
+阅读顺序：先 `sources.md` 和 `journeys.md`，再按 `domain.md` → `commands.md` → `cloud.md` 实现。协作三档见 `collaboration.md`，一期不实现。`license-and-backlog.md` 用来判断某一段代码能不能进仓库、该落在哪一阶段。
 
 文档站导航里的「功能设计」指向同一组结论，正文以本目录为准。

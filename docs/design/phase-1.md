@@ -63,4 +63,4 @@ Project
 ## 明确不做
 
 - 不把 Toonflow 的 Vue 界面或火宝短剧的代码拷进仓库。画布底座已经按 Apache-2.0 放在 `apps/workspace`
-- 不在一期做完整的浏览器协作工作台
+- 不在一期做完整的浏览器协作工作台。三种强度和改动量见 [collaboration.md](collaboration.md)

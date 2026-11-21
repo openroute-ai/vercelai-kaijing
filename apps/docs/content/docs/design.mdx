@@ -15,6 +15,7 @@ description: 三份上游如何落到开镜的桌面工作台和薄云
 | 领域与存储 | `docs/design/domain.md` |
 | 命令、节点、导演 | `docs/design/commands.md` |
 | 薄云与供应商 | `docs/design/cloud.md` |
+| 协作三档 | `docs/design/collaboration.md` |
 | 许可与 M0–M6 | `docs/design/license-and-backlog.md` |
 
 本页是同一设计的结论。字段级的表结构和命令入参以那些文件为准。
@@ -29,9 +30,11 @@ Toonflow（MIT，Vue / Vue Flow）只提供领域语义：剧本和分镜、角�
 
 ## 两条路径
 
-普通用户安装客户端后，本机工作台自动打开。没有 `cloud.session_token` 时进入工作台里的云端账户页，调用 `POST /api/v1/cloud/register` 或 `/login`。然后新建本地项目，输入一句话，点「做一集」。导演在本机按命令顺序编排；生图和生视频走薄云并扣积分；结果下载回本地素材和画布。导出 MP4 到用户选择的目录，不上传。
+普通用户安装客户端后，本机工作台自动打开。没有 `cloud.session_token` 时进入工作台里的云端账户页，调用 `POST /api/v1/cloud/register` 或 `/login`。这两个接口把注册和登录交给 better-auth，cookie 由 `cloud` 实例签发。然后新建本地项目。M1 可以在 `/drama` 手写剧本和分镜并重新打开，不调用模型。点「做一集」仍是后续里程碑：导演在本机按命令顺序编排；生图和生视频走薄云并扣积分；结果下载回本地素材和画布。导出 MP4 到用户选择的目录，不上传。
 
-平台运营登录 `apps/web`。可以查看云端用户、封禁、调整积分、查看生成任务。不能打开用户的画布，也不能用运营 cookie 调用 `/api/v1/cloud/*`。
+平台运营登录 `apps/web`，用另一份 better-auth（`web` cookie，`web_auth`）。可以查看云端用户、封禁、调整积分、查看生成任务。不能打开用户的画布，也不能用运营 cookie 调用 `/api/v1/cloud/*`。公开邮箱注册页关闭，这个门禁在 better-auth 插件里。受邀手机号仍通过 better-auth 的手机号插件注册。
+
+协作的三种强度见 `docs/design/collaboration.md`。一期不做。
 
 未登录、积分不足、供应商失败和修订冲突的处理见 `docs/design/journeys.md`。积分不足时保留已写好的剧本和分镜。
 

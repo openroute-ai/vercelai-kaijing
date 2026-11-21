@@ -55,7 +55,7 @@ apiV1.use(
   })
 )
 
-app.all(`${AUTH_PATH}/*`, () => auth.handler())
+app.all(`${AUTH_PATH}/*`, (c) => auth.handler(c.req.raw))
 
 apiV1.route("/health", health)
 apiV1.route("/hello", hello)

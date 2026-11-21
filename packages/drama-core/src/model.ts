@@ -1,6 +1,6 @@
 /**
- * 短剧领域对象。M0 只有类型，没有持久化或生成实现。
- * 画布边和生成谱系以后分开记，不要混进这些结构。
+ * 短剧领域对象。手写稿的校验在 validate.ts。
+ * 模型命令仍由 createStubCommandKernel 拒绝。画布边和生成谱系分开记。
  */
 
 export type DramaProject = {

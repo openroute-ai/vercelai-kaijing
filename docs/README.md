@@ -17,6 +17,7 @@ docs/
     ├── domain.md
     ├── commands.md
     ├── cloud.md
+    ├── collaboration.md
     └── license-and-backlog.md
 apps/docs/content/docs/   # 会发布的文档站
 ```
@@ -24,6 +25,7 @@ apps/docs/content/docs/   # 会发布的文档站
 | 想找什么 | 去哪里 |
 | --- | --- |
 | 功能设计 | [design/INDEX.md](design/INDEX.md) |
+| 协作三档 | [design/collaboration.md](design/collaboration.md) |
 | 一期架构简图 | [design/phase-1.md](design/phase-1.md) |
 | 发布站 | `apps/docs`，`pnpm --filter doc dev` |
 | 开发约定 | [AGENTS.md](../AGENTS.md) |

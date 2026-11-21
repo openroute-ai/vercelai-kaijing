@@ -24,6 +24,8 @@ import { Route as ApiPingRouteImport } from './routes/api/ping'
 import { Route as AssetsProjectIdRouteImport } from './routes/assets/$projectId'
 import { Route as CanvasIndexRouteImport } from './routes/canvas/index'
 import { Route as CanvasProjectIdRouteImport } from './routes/canvas/$projectId'
+import { Route as DramaIndexRouteImport } from './routes/drama/index'
+import { Route as DramaProjectIdRouteImport } from './routes/drama/$projectId'
 import { Route as EditorProjectIdRouteImport } from './routes/editor/$projectId'
 import { Route as StudioIndexRouteImport } from './routes/studio/index'
 import { Route as StudioProjectIdRouteImport } from './routes/studio/$projectId'
@@ -42,6 +44,7 @@ import { Route as ApiAppProjectsProjectIdRouteImport } from './routes/api/app/pr
 import { Route as ApiAppWorkflowTemplatesIndexRouteImport } from './routes/api/app/workflow-templates/index'
 import { Route as ApiAppWorkflowTemplatesTemplateIdRouteImport } from './routes/api/app/workflow-templates/$templateId'
 import { Route as ApiAppProjectsProjectIdCommandsRouteImport } from './routes/api/app/projects/$projectId/commands'
+import { Route as ApiAppProjectsProjectIdDramaRouteImport } from './routes/api/app/projects/$projectId/drama'
 import { Route as ApiAppProjectsProjectIdGenerationsRouteImport } from './routes/api/app/projects/$projectId/generations'
 import { Route as ApiAppProjectsProjectIdOrganizationRouteImport } from './routes/api/app/projects/$projectId/organization'
 import { Route as ApiAppProjectsProjectIdOrganizationAssetsRouteImport } from './routes/api/app/projects/$projectId/organization-assets'
@@ -128,6 +131,16 @@ const CanvasProjectIdRoute = CanvasProjectIdRouteImport.update({
   id: '/$projectId',
   path: '/$projectId',
   getParentRoute: () => CanvasRouteRoute,
+} as any)
+const DramaIndexRoute = DramaIndexRouteImport.update({
+  id: '/drama/',
+  path: '/drama/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DramaProjectIdRoute = DramaProjectIdRouteImport.update({
+  id: '/drama/$projectId',
+  path: '/drama/$projectId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EditorProjectIdRoute = EditorProjectIdRouteImport.update({
   id: '/editor/$projectId',
@@ -222,6 +235,12 @@ const ApiAppProjectsProjectIdCommandsRoute =
     path: '/commands',
     getParentRoute: () => ApiAppProjectsProjectIdRoute,
   } as any)
+const ApiAppProjectsProjectIdDramaRoute =
+  ApiAppProjectsProjectIdDramaRouteImport.update({
+    id: '/drama',
+    path: '/drama',
+    getParentRoute: () => ApiAppProjectsProjectIdRoute,
+  } as any)
 const ApiAppProjectsProjectIdGenerationsRoute =
   ApiAppProjectsProjectIdGenerationsRouteImport.update({
     id: '/generations',
@@ -309,9 +328,11 @@ export interface FileRoutesByFullPath {
   '/api/ping': typeof ApiPingRoute
   '/assets/$projectId': typeof AssetsProjectIdRoute
   '/canvas/$projectId': typeof CanvasProjectIdRoute
+  '/drama/$projectId': typeof DramaProjectIdRoute
   '/editor/$projectId': typeof EditorProjectIdRoute
   '/studio/$projectId': typeof StudioProjectIdRoute
   '/canvas/': typeof CanvasIndexRoute
+  '/drama/': typeof DramaIndexRoute
   '/studio/': typeof StudioIndexRoute
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
@@ -328,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/api/app/projects/': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates/': typeof ApiAppWorkflowTemplatesIndexRoute
   '/api/app/projects/$projectId/commands': typeof ApiAppProjectsProjectIdCommandsRoute
+  '/api/app/projects/$projectId/drama': typeof ApiAppProjectsProjectIdDramaRoute
   '/api/app/projects/$projectId/generations': typeof ApiAppProjectsProjectIdGenerationsRoute
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
@@ -353,9 +375,11 @@ export interface FileRoutesByTo {
   '/api/ping': typeof ApiPingRoute
   '/assets/$projectId': typeof AssetsProjectIdRoute
   '/canvas/$projectId': typeof CanvasProjectIdRoute
+  '/drama/$projectId': typeof DramaProjectIdRoute
   '/editor/$projectId': typeof EditorProjectIdRoute
   '/studio/$projectId': typeof StudioProjectIdRoute
   '/canvas': typeof CanvasIndexRoute
+  '/drama': typeof DramaIndexRoute
   '/studio': typeof StudioIndexRoute
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
@@ -372,6 +396,7 @@ export interface FileRoutesByTo {
   '/api/app/projects': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates': typeof ApiAppWorkflowTemplatesIndexRoute
   '/api/app/projects/$projectId/commands': typeof ApiAppProjectsProjectIdCommandsRoute
+  '/api/app/projects/$projectId/drama': typeof ApiAppProjectsProjectIdDramaRoute
   '/api/app/projects/$projectId/generations': typeof ApiAppProjectsProjectIdGenerationsRoute
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
@@ -401,9 +426,11 @@ export interface FileRoutesById {
   '/api/ping': typeof ApiPingRoute
   '/assets/$projectId': typeof AssetsProjectIdRoute
   '/canvas/$projectId': typeof CanvasProjectIdRoute
+  '/drama/$projectId': typeof DramaProjectIdRoute
   '/editor/$projectId': typeof EditorProjectIdRoute
   '/studio/$projectId': typeof StudioProjectIdRoute
   '/canvas/': typeof CanvasIndexRoute
+  '/drama/': typeof DramaIndexRoute
   '/studio/': typeof StudioIndexRoute
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
@@ -420,6 +447,7 @@ export interface FileRoutesById {
   '/api/app/projects/': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates/': typeof ApiAppWorkflowTemplatesIndexRoute
   '/api/app/projects/$projectId/commands': typeof ApiAppProjectsProjectIdCommandsRoute
+  '/api/app/projects/$projectId/drama': typeof ApiAppProjectsProjectIdDramaRoute
   '/api/app/projects/$projectId/generations': typeof ApiAppProjectsProjectIdGenerationsRoute
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
@@ -449,9 +477,11 @@ export interface FileRouteTypes {
     | '/api/ping'
     | '/assets/$projectId'
     | '/canvas/$projectId'
+    | '/drama/$projectId'
     | '/editor/$projectId'
     | '/studio/$projectId'
     | '/canvas/'
+    | '/drama/'
     | '/studio/'
     | '/api/app/recent-assets'
     | '/api/assets/download'
@@ -468,6 +498,7 @@ export interface FileRouteTypes {
     | '/api/app/projects/'
     | '/api/app/workflow-templates/'
     | '/api/app/projects/$projectId/commands'
+    | '/api/app/projects/$projectId/drama'
     | '/api/app/projects/$projectId/generations'
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
@@ -493,9 +524,11 @@ export interface FileRouteTypes {
     | '/api/ping'
     | '/assets/$projectId'
     | '/canvas/$projectId'
+    | '/drama/$projectId'
     | '/editor/$projectId'
     | '/studio/$projectId'
     | '/canvas'
+    | '/drama'
     | '/studio'
     | '/api/app/recent-assets'
     | '/api/assets/download'
@@ -512,6 +545,7 @@ export interface FileRouteTypes {
     | '/api/app/projects'
     | '/api/app/workflow-templates'
     | '/api/app/projects/$projectId/commands'
+    | '/api/app/projects/$projectId/drama'
     | '/api/app/projects/$projectId/generations'
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
@@ -540,9 +574,11 @@ export interface FileRouteTypes {
     | '/api/ping'
     | '/assets/$projectId'
     | '/canvas/$projectId'
+    | '/drama/$projectId'
     | '/editor/$projectId'
     | '/studio/$projectId'
     | '/canvas/'
+    | '/drama/'
     | '/studio/'
     | '/api/app/recent-assets'
     | '/api/assets/download'
@@ -559,6 +595,7 @@ export interface FileRouteTypes {
     | '/api/app/projects/'
     | '/api/app/workflow-templates/'
     | '/api/app/projects/$projectId/commands'
+    | '/api/app/projects/$projectId/drama'
     | '/api/app/projects/$projectId/generations'
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
@@ -584,7 +621,9 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPingRoute: typeof ApiPingRoute
+  DramaProjectIdRoute: typeof DramaProjectIdRoute
   EditorProjectIdRoute: typeof EditorProjectIdRoute
+  DramaIndexRoute: typeof DramaIndexRoute
   ApiAppRecentAssetsRoute: typeof ApiAppRecentAssetsRoute
   ApiAssetsDownloadRoute: typeof ApiAssetsDownloadRoute
   ApiConfigBeatapiRoute: typeof ApiConfigBeatapiRoute
@@ -707,6 +746,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/canvas/$projectId'
       preLoaderRoute: typeof CanvasProjectIdRouteImport
       parentRoute: typeof CanvasRouteRoute
+    }
+    '/drama/': {
+      id: '/drama/'
+      path: '/drama'
+      fullPath: '/drama/'
+      preLoaderRoute: typeof DramaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drama/$projectId': {
+      id: '/drama/$projectId'
+      path: '/drama/$projectId'
+      fullPath: '/drama/$projectId'
+      preLoaderRoute: typeof DramaProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/editor/$projectId': {
       id: '/editor/$projectId'
@@ -832,6 +885,13 @@ declare module '@tanstack/react-router' {
       path: '/commands'
       fullPath: '/api/app/projects/$projectId/commands'
       preLoaderRoute: typeof ApiAppProjectsProjectIdCommandsRouteImport
+      parentRoute: typeof ApiAppProjectsProjectIdRoute
+    }
+    '/api/app/projects/$projectId/drama': {
+      id: '/api/app/projects/$projectId/drama'
+      path: '/drama'
+      fullPath: '/api/app/projects/$projectId/drama'
+      preLoaderRoute: typeof ApiAppProjectsProjectIdDramaRouteImport
       parentRoute: typeof ApiAppProjectsProjectIdRoute
     }
     '/api/app/projects/$projectId/generations': {
@@ -992,6 +1052,7 @@ const ApiAppProjectsProjectIdAssetsAssetIdRouteWithChildren =
 
 interface ApiAppProjectsProjectIdRouteChildren {
   ApiAppProjectsProjectIdCommandsRoute: typeof ApiAppProjectsProjectIdCommandsRoute
+  ApiAppProjectsProjectIdDramaRoute: typeof ApiAppProjectsProjectIdDramaRoute
   ApiAppProjectsProjectIdGenerationsRoute: typeof ApiAppProjectsProjectIdGenerationsRoute
   ApiAppProjectsProjectIdOrganizationRoute: typeof ApiAppProjectsProjectIdOrganizationRoute
   ApiAppProjectsProjectIdOrganizationAssetsRoute: typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
@@ -1008,6 +1069,7 @@ interface ApiAppProjectsProjectIdRouteChildren {
 const ApiAppProjectsProjectIdRouteChildren: ApiAppProjectsProjectIdRouteChildren =
   {
     ApiAppProjectsProjectIdCommandsRoute: ApiAppProjectsProjectIdCommandsRoute,
+    ApiAppProjectsProjectIdDramaRoute: ApiAppProjectsProjectIdDramaRoute,
     ApiAppProjectsProjectIdGenerationsRoute:
       ApiAppProjectsProjectIdGenerationsRoute,
     ApiAppProjectsProjectIdOrganizationRoute:
@@ -1045,7 +1107,9 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPingRoute: ApiPingRoute,
+  DramaProjectIdRoute: DramaProjectIdRoute,
   EditorProjectIdRoute: EditorProjectIdRoute,
+  DramaIndexRoute: DramaIndexRoute,
   ApiAppRecentAssetsRoute: ApiAppRecentAssetsRoute,
   ApiAssetsDownloadRoute: ApiAssetsDownloadRoute,
   ApiConfigBeatapiRoute: ApiConfigBeatapiRoute,
