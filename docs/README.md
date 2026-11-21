@@ -11,14 +11,20 @@ docs/
 ├── README.md
 └── design/
     ├── INDEX.md
-    └── phase-1.md
+    ├── phase-1.md
+    ├── sources.md
+    ├── journeys.md
+    ├── domain.md
+    ├── commands.md
+    ├── cloud.md
+    └── license-and-backlog.md
 apps/docs/content/docs/   # 会发布的文档站
 ```
 
 | 想找什么 | 去哪里 |
 | --- | --- |
-| 一期架构 | [design/phase-1.md](design/phase-1.md) |
-| 设计清单 | [design/INDEX.md](design/INDEX.md) |
+| 功能设计 | [design/INDEX.md](design/INDEX.md) |
+| 一期架构简图 | [design/phase-1.md](design/phase-1.md) |
 | 发布站 | `apps/docs`，`pnpm --filter doc dev` |
 | 开发约定 | [AGENTS.md](../AGENTS.md) |
 

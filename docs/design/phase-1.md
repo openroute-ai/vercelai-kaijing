@@ -1,5 +1,7 @@
 # 开镜一期架构
 
+可照着实现的正文在 [INDEX.md](INDEX.md)：上游怎么映射、使用路径、领域模型、命令、薄云合同、许可和 M0–M6。
+
 一期给普通用户的产品是 Windows / macOS 安装包，加上一层薄云。用户不需要自己部署，也不需要自己申请各家模型密钥。
 
 ```text
@@ -60,6 +62,5 @@ Project
 
 ## 明确不做
 
-- 不复制 BeatDesign、Toonflow 或火宝短剧的代码
-- 不把 Vue 界面拼进这个 React 仓库
+- 不把 Toonflow 的 Vue 界面或火宝短剧的代码拷进仓库。画布底座已经按 Apache-2.0 放在 `apps/workspace`
 - 不在一期做完整的浏览器协作工作台

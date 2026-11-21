@@ -117,8 +117,9 @@ pnpm --filter @workspace/db db:seed:admin
 
 ## 文档
 
+- 功能设计（三份上游怎么做成开镜，含路径、领域、命令和里程碑）：[docs/design/INDEX.md](docs/design/INDEX.md)
 - 文档索引：[docs/README.md](docs/README.md)
-- 一期架构：[docs/design/phase-1.md](docs/design/phase-1.md)
+- 一期架构简图：[docs/design/phase-1.md](docs/design/phase-1.md)
 - 开发约定：[AGENTS.md](AGENTS.md)
 
 ## 这一版不做

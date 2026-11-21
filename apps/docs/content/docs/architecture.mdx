@@ -14,9 +14,9 @@ description: 桌面客户端与薄云怎么分工
 
 ## 生成
 
-桌面端把请求交给 `POST /api/v1/generations`。网关通过 `packages/providers` 的 `GenerationProvider` 调供应商。M0 的实现是 `createStubProvider()`，任务会记成 `queued`，不会出网。
+桌面端把请求交给 `POST /api/v1/generations`。网关通过 `packages/providers` 的 `GenerationProvider` 调供应商。当前实现是 `createStubProvider()`，任务会记成 `queued`，不会出网。短剧命令和扣费顺序见 [功能设计](/docs/design)。
 
 ## 数据
 
-- 本机项目以后用 SQLite 和本地文件。M0 还没有这层。
-- 云端 Postgres 只放 better-auth 账户、`credit_accounts` / `credit_ledger` 和 `generation_jobs`。
+- 本机项目、画布和时间线用 SQLite 和本地文件。短剧剧本和分镜也写在这份库里，不进 Postgres。
+- 云端 Postgres 只放账户、`credit_accounts` / `credit_ledger` 和 `generation_jobs`。桌面用户是 `cloud` 会话，运营后台是另一套 `web` 会话。

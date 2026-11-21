@@ -14,20 +14,20 @@ icon: IconHome
 
 ## 仓库里现在有什么
 
-M0 是骨架，不是能出片的产品：
+本机工作台已经能打开创作台和画布。短剧导演、真实供应商和安装包还没做。功能设计见 [设计](/docs/design)。
 
 - `apps/desktop`：Electron 壳，开发时打开本机工作台
-- `apps/workspace`：Vite + React 欢迎页
-- `apps/web` / `apps/api`：登录、积分和生成任务占位
+- `apps/workspace`：Vite 工作台，本机 SQLite
+- `apps/web`：平台运营登录，和桌面用户的 `cloud` 会话分开
+- `apps/api`：云端账户、积分和生成任务占位
 - `packages/drama-core`、`packages/providers`：领域类型和供应商接口
-
-剧本改写、分镜、画布、时间线和真实供应商调用都还没实现。
 
 ## 本地运行工作台
 
 ```bash
 pnpm install
+pnpm --filter workspace db:push
 pnpm --filter workspace dev
 ```
 
-浏览器打开 `http://127.0.0.1:5173`。需要桌面窗口时，另开一个终端执行 `pnpm --filter desktop dev`。
+浏览器打开 `http://127.0.0.1:3020`。需要桌面窗口时，另开一个终端执行 `pnpm --filter desktop dev`。
