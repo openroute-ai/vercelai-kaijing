@@ -12,7 +12,8 @@
 | [cloud.md](cloud.md) | 薄云 API、积分和 `GenerationProvider` 合同 |
 | [collaboration.md](collaboration.md) | 导出互传、只读分享、同时编辑，以及相对现在的改动大小 |
 | [license-and-backlog.md](license-and-backlog.md) | 许可、归属、M0–M6 和明确不做的事 |
+| [../ued/INDEX.md](../ued/INDEX.md) | 交互与界面：屏幕、操作和状态。功能边界以本目录为准 |
 
-阅读顺序：先 `sources.md` 和 `journeys.md`，再按 `domain.md` → `commands.md` → `cloud.md` 实现。协作三档见 `collaboration.md`，一期不实现。`license-and-backlog.md` 用来判断某一段代码能不能进仓库、该落在哪一阶段。
+阅读顺序：先 `sources.md` 和 `journeys.md`，再按 `domain.md` → `commands.md` → `cloud.md` 实现。协作三档见 `collaboration.md`，一期不实现。界面按 [../ued/INDEX.md](../ued/INDEX.md) 画，不在界面里使用上游产品名。`license-and-backlog.md` 用来判断某一段代码能不能进仓库、该落在哪一阶段。
 
 文档站导航里的「功能设计」指向同一组结论，正文以本目录为准。
