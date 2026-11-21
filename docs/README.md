@@ -9,22 +9,32 @@
 ```text
 docs/
 ├── README.md
-└── design/
+├── design/
+│   ├── INDEX.md
+│   ├── phase-1.md
+│   ├── sources.md
+│   ├── journeys.md
+│   ├── domain.md
+│   ├── commands.md
+│   ├── cloud.md
+│   ├── collaboration.md
+│   └── license-and-backlog.md
+└── ued/
     ├── INDEX.md
-    ├── phase-1.md
-    ├── sources.md
-    ├── journeys.md
-    ├── domain.md
-    ├── commands.md
-    ├── cloud.md
-    ├── collaboration.md
-    └── license-and-backlog.md
+    ├── shell.md
+    ├── cloud-account.md
+    ├── projects.md
+    ├── workspace.md
+    ├── drama.md
+    ├── export-and-failures.md
+    └── admin.md
 apps/docs/content/docs/   # 会发布的文档站
 ```
 
 | 想找什么 | 去哪里 |
 | --- | --- |
 | 功能设计 | [design/INDEX.md](design/INDEX.md) |
+| 交互与界面 | [ued/INDEX.md](ued/INDEX.md) |
 | 协作三档 | [design/collaboration.md](design/collaboration.md) |
 | 一期架构简图 | [design/phase-1.md](design/phase-1.md) |
 | 发布站 | `apps/docs`，`pnpm --filter doc dev` |
