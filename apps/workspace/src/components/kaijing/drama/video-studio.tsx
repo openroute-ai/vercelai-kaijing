@@ -2,8 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import { assetPreviewUrl, entitiesMentionedInText, type NamedEntity } from './workbench-steps';
+import { mentionCatalogFromLists, PromptMentionField } from './prompt-mentions';
+import { mentionReferenceIds, parseMentions } from './mentions';
+import { assetPreviewUrl } from './workbench-steps';
 import type { EditableShot } from './shot-card';
+import type { EditableAsset } from './asset-card';
 
 function statusLabel(status?: string) {
   if (status === 'ready') return '已生成';
@@ -13,6 +16,13 @@ function statusLabel(status?: string) {
   return '草稿';
 }
 
+export type StoryboardVersion = {
+  id: string
+  title: string
+  current?: boolean
+  createdAt?: string | Date | null
+};
+
 export function DramaVideoStudio({
   projectId,
   aspectRatio,
@@ -21,6 +31,7 @@ export function DramaVideoStudio({
   characters,
   scenes,
   props,
+  storyboards,
   busy,
   onSelect,
   onChangeShot,
@@ -28,14 +39,18 @@ export function DramaVideoStudio({
   onBreakdown,
   onGenerateShot,
   onGenerateMissing,
+  onGenerateVoice,
+  onUploadShot,
+  onSwitchStoryboard,
 }: {
   projectId: string
   aspectRatio: '9:16' | '16:9'
   shots: EditableShot[]
   selectedIndex: number
-  characters: NamedEntity[]
-  scenes: NamedEntity[]
-  props: NamedEntity[]
+  characters: EditableAsset[]
+  scenes: EditableAsset[]
+  props: EditableAsset[]
+  storyboards?: StoryboardVersion[]
   busy?: boolean
   onSelect: (index: number) => void
   onChangeShot: (index: number, next: EditableShot) => void
@@ -43,17 +58,26 @@ export function DramaVideoStudio({
   onBreakdown: () => void
   onGenerateShot: (shot: EditableShot) => void
   onGenerateMissing: () => void
+  onGenerateVoice?: (shot: EditableShot) => void
+  onUploadShot?: (shot: EditableShot, file: File) => void
+  onSwitchStoryboard?: (storyboardId: string) => void
 }) {
   const shot = shots[selectedIndex];
   const preview = shot ? assetPreviewUrl(projectId, shot.videoAssetId || shot.imageAssetId) : null;
-  const mentionText = shot
-    ? [shot.description, shot.dialogue, shot.imagePrompt, shot.videoPrompt].filter(Boolean).join('\n')
-    : '';
-  const relatedCharacters = entitiesMentionedInText(mentionText, characters);
-  const relatedScenes = entitiesMentionedInText(mentionText, scenes);
-  const relatedProps = entitiesMentionedInText(mentionText, props);
+  const audioUrl = shot ? assetPreviewUrl(projectId, shot.audioAssetId) : null;
+  const catalog = mentionCatalogFromLists({ characters, scenes, props });
   const readyCount = shots.filter((item) => item.status === 'ready' && item.videoAssetId).length;
   const failedCount = shots.filter((item) => item.status === 'failed').length;
+
+  function applyPrompt(field: 'imagePrompt' | 'videoPrompt', next: string) {
+    if (!shot) return;
+    const mentions = parseMentions(`${next}\n${field === 'imagePrompt' ? shot.videoPrompt ?? '' : shot.imagePrompt ?? ''}\n${shot.description}`, catalog);
+    onChangeShot(selectedIndex, {
+      ...shot,
+      [field]: next,
+      referenceAssetIds: mentionReferenceIds(mentions),
+    });
+  }
 
   return (
     <section className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)_minmax(16rem,22rem)]">
@@ -64,6 +88,22 @@ export function DramaVideoStudio({
             {readyCount} 已生成 · {failedCount} 失败 · {shots.length} 镜
           </span>
         </div>
+        {storyboards && storyboards.length > 0 && onSwitchStoryboard ? (
+          <label className="border-b border-white/10 px-3 py-2 text-xs text-white/60">
+            分镜版本
+            <select
+              className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-sm text-white"
+              value={storyboards.find((item) => item.current)?.id || ''}
+              onChange={(event) => event.target.value && onSwitchStoryboard(event.target.value)}
+            >
+              {storyboards.map((item, index) => (
+                <option key={item.id} value={item.id}>
+                  {(item.title || '分镜') + (item.current ? '（当前）' : '')} · 第 {storyboards.length - index} 版
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <ul className="min-h-0 flex-1 overflow-y-auto p-2">
           {shots.length === 0 ? (
             <li className="px-2 py-6 text-sm text-white/45">还没有分镜。完成剧本后可以拆分镜。</li>
@@ -155,52 +195,21 @@ export function DramaVideoStudio({
                 }
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              画面提示词
-              <Textarea
-                className="min-h-16 border-white/15 bg-black/30 text-sm"
-                value={shot.imagePrompt ?? ''}
-                onChange={(event) => onChangeShot(selectedIndex, { ...shot, imagePrompt: event.target.value })}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              视频提示词
-              <Textarea
-                className="min-h-20 border-white/15 bg-black/30 text-sm"
-                value={shot.videoPrompt ?? ''}
-                onChange={(event) => onChangeShot(selectedIndex, { ...shot, videoPrompt: event.target.value })}
-              />
-            </label>
-            <div className="text-sm">
-              <p className="mb-1 text-white/70">这一镜提到的角色与场景</p>
-              <p className="text-xs leading-5 text-white/45">
-                仅按名称是否出现在描述、对白或提示词里展示，不是强制绑定。
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {relatedCharacters.length + relatedScenes.length + relatedProps.length === 0 ? (
-                  <span className="text-xs text-white/40">还没有识别到已有资产名称。</span>
-                ) : (
-                  <>
-                    {relatedCharacters.map((item) => (
-                      <span key={`c-${item.id || item.name}`} className="rounded-full bg-white/10 px-2 py-1 text-xs">
-                        角色 · {item.name}
-                        {item.assetId ? '' : '（无形象）'}
-                      </span>
-                    ))}
-                    {relatedScenes.map((item) => (
-                      <span key={`s-${item.id || item.name}`} className="rounded-full bg-white/10 px-2 py-1 text-xs">
-                        场景 · {item.name}
-                      </span>
-                    ))}
-                    {relatedProps.map((item) => (
-                      <span key={`p-${item.id || item.name}`} className="rounded-full bg-white/10 px-2 py-1 text-xs">
-                        道具 · {item.name}
-                      </span>
-                    ))}
-                  </>
-                )}
-              </div>
-            </div>
+            <PromptMentionField
+              label="画面提示词"
+              value={shot.imagePrompt ?? ''}
+              catalog={catalog}
+              className="min-h-16 border-white/15 bg-black/30 text-sm"
+              onChange={(next) => applyPrompt('imagePrompt', next)}
+            />
+            <PromptMentionField
+              label="视频提示词"
+              value={shot.videoPrompt ?? ''}
+              catalog={catalog}
+              className="min-h-20 border-white/15 bg-black/30 text-sm"
+              placeholder="输入 @ 绑定角色或场景"
+              onChange={(next) => applyPrompt('videoPrompt', next)}
+            />
             {shot.errorMessage ? <p className="text-xs text-amber-200">{shot.errorMessage}</p> : null}
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" disabled={busy || !shot.id} onClick={() => onGenerateShot(shot)}>
@@ -209,6 +218,32 @@ export function DramaVideoStudio({
               <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onGenerateMissing}>
                 生成未完成镜头
               </Button>
+              {onGenerateVoice ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={busy || !shot.id || !shot.dialogue.trim()}
+                  onClick={() => onGenerateVoice(shot)}
+                >
+                  {shot.audioAssetId ? '重新配音' : '生成对白配音'}
+                </Button>
+              ) : null}
+              {onUploadShot && shot.id ? (
+                <label className="inline-flex h-7 cursor-pointer items-center rounded-lg border border-white/15 px-2.5 text-[0.8rem]">
+                  上传镜头视频
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) onUploadShot(shot, file);
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+              ) : null}
             </div>
           </>
         )}
@@ -229,6 +264,14 @@ export function DramaVideoStudio({
             <div className="flex size-full items-center justify-center text-xs text-white/40">还没有镜头预览</div>
           )}
         </div>
+        {audioUrl ? (
+          <div className="mt-3">
+            <p className="mb-1 text-xs text-white/55">对白配音</p>
+            <audio src={audioUrl} controls className="w-full" preload="metadata" />
+          </div>
+        ) : shot?.dialogue ? (
+          <p className="mt-3 text-xs text-white/40">有对白，但还没有配音。</p>
+        ) : null}
       </div>
     </section>
   );

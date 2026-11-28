@@ -206,6 +206,8 @@ export async function markShot(input: {
   cloudJobId?: string | null
   videoAssetId?: string | null
   imageAssetId?: string | null
+  audioAssetId?: string | null
+  referenceAssetIds?: string[]
 }) {
   const db = await getDb();
   await db
@@ -216,6 +218,8 @@ export async function markShot(input: {
       cloudJobId: input.cloudJobId ?? undefined,
       videoAssetId: input.videoAssetId ?? undefined,
       imageAssetId: input.imageAssetId ?? undefined,
+      audioAssetId: input.audioAssetId ?? undefined,
+      referenceAssetIds: input.referenceAssetIds ?? undefined,
       updatedAt: new Date(),
     })
     .where(eq(dramaShots.id, input.shotId));

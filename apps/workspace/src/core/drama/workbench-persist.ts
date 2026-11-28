@@ -138,21 +138,28 @@ export async function saveDramaWorkbenchDraft(
           (item) => item.index === shot.index && item.description === shot.description
         );
       if (!match) continue;
-      if (match.videoAssetId || match.imageAssetId || match.status !== 'draft') {
-        await db
-          .update(dramaShots)
-          .set({
-            status: shot.status && shot.status !== 'draft' ? shot.status : match.status,
-            videoAssetId: match.videoAssetId,
-            imageAssetId: match.imageAssetId,
-            imagePrompt: match.imagePrompt,
-            videoPrompt: match.videoPrompt,
-            errorMessage: match.errorMessage,
-            cloudJobId: match.cloudJobId,
-            updatedAt: now,
-          })
-          .where(eq(dramaShots.id, shot.id));
-      }
+      const incoming = Array.isArray((input.storyboard as { shots?: unknown[] } | undefined)?.shots)
+        ? ((input.storyboard as { shots: Array<Record<string, unknown>> }).shots[shot.index] ?? {})
+        : {};
+      await db
+        .update(dramaShots)
+        .set({
+          status: match.status && match.status !== 'draft' ? match.status : shot.status ?? match.status,
+          videoAssetId: match.videoAssetId,
+          imageAssetId: match.imageAssetId,
+          audioAssetId: match.audioAssetId,
+          imagePrompt:
+            typeof incoming.imagePrompt === 'string' ? incoming.imagePrompt : match.imagePrompt,
+          videoPrompt:
+            typeof incoming.videoPrompt === 'string' ? incoming.videoPrompt : match.videoPrompt,
+          referenceAssetIds: Array.isArray(incoming.referenceAssetIds)
+            ? incoming.referenceAssetIds
+            : match.referenceAssetIds,
+          errorMessage: match.errorMessage,
+          cloudJobId: match.cloudJobId,
+          updatedAt: now,
+        })
+        .where(eq(dramaShots.id, shot.id));
     }
   }
   await upsertDramaEntities(projectId, {

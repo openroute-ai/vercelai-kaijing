@@ -5,13 +5,19 @@ import { loadLatestRun } from '@/core/drama/director-persist';
 import { runAssembleEpisodeOnly, runEpisodeDirector } from '@/core/drama/episode-run';
 import {
   attachWorkbenchEntityAsset,
+  attachWorkbenchShotAsset,
   breakdownWorkbenchStoryboard,
   extractWorkbenchEntities,
   generateWorkbenchEntityImages,
   generateWorkbenchShotVideos,
+  generateWorkbenchShotVoice,
+  markWorkbenchEpisode,
+  retryWorkbenchTask,
   rewriteWorkbenchScript,
   skipScriptRewrite,
+  switchWorkbenchStoryboard,
 } from '@/core/drama/workbench-actions';
+import { loadDramaLoopState } from '@/core/drama/loop-persist';
 import {
   ensureDramaSettings,
   loadDramaDraft,
@@ -30,14 +36,26 @@ import { validateTrustedWorkspaceJsonMutation } from '@/lib/trusted-local-reques
 async function GET({ params }: { params: { projectId: string } }) {
   const found = await getProject({ projectId: params.projectId });
   if (!found) return Response.json({ error: '找不到项目' }, { status: 404 });
-  const draft = await loadDramaDraft(params.projectId);
+  const loop = await loadDramaLoopState(params.projectId);
   const run = await loadLatestRun(params.projectId);
   return Response.json({
-    draft,
+    draft: loop.draft,
     steps: run?.steps ?? [],
     runStatus: run?.status ?? null,
     storage: describeLocalStorage(),
+    storyboards: loop.storyboards,
+    exports: loop.exports,
+    tasks: loop.tasks,
   });
+}
+
+
+async function withLoop(projectId: string, body: Record<string, unknown>, status = 200) {
+  const loop = await loadDramaLoopState(projectId);
+  return Response.json(
+    { ...body, draft: loop.draft, storyboards: loop.storyboards, exports: loop.exports, tasks: loop.tasks },
+    { status }
+  );
 }
 
 async function readPayload(request: Request) {
@@ -127,38 +145,44 @@ async function POST({
     const assetId = typeof payload.assetId === 'string' ? payload.assetId : '';
     const publicUrl = typeof payload.publicUrl === 'string' ? payload.publicUrl : '';
     if (!assetId) return Response.json({ error: '缺少成片素材' }, { status: 400 });
+    const title = typeof payload.title === 'string' ? payload.title : '成片';
+    const shotIds = Array.isArray(payload.shotIds)
+      ? payload.shotIds.filter((item): item is string => typeof item === 'string')
+      : undefined;
     const recorded = await recordEpisodeRender({
       projectId: params.projectId,
       assetId,
       publicUrl,
+      title,
+      shotIds,
     });
     if (!recorded.ok) return Response.json({ error: recorded.message }, { status: 400 });
-    return Response.json(recorded);
+    return withLoop(params.projectId, recorded);
   }
 
 
   if (payload.action === 'rewrite-script') {
     const result = await rewriteWorkbenchScript({ projectId: params.projectId, request });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'skip-rewrite') {
     const result = await skipScriptRewrite({ projectId: params.projectId });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'extract-entities') {
     const result = await extractWorkbenchEntities({ projectId: params.projectId, request });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'breakdown-storyboard') {
     const result = await breakdownWorkbenchStoryboard({ projectId: params.projectId, request });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'generate-entity-image') {
@@ -176,7 +200,7 @@ async function POST({
       onlyMissing: payload.onlyMissing !== false,
     });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'attach-entity-asset') {
@@ -191,7 +215,7 @@ async function POST({
       assetId,
     });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'generate-shot-video') {
@@ -206,7 +230,67 @@ async function POST({
       shotIds,
     });
     if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
-    return Response.json({ draft: result.draft, message: result.message });
+    return withLoop(params.projectId, { message: result.message });
+  }
+
+  if (payload.action === 'generate-shot-audio') {
+    const shotIds = Array.isArray(payload.shotIds)
+      ? payload.shotIds.filter((item): item is string => typeof item === 'string')
+      : typeof payload.shotId === 'string'
+        ? [payload.shotId]
+        : undefined;
+    const result = await generateWorkbenchShotVoice({
+      projectId: params.projectId,
+      request,
+      shotIds,
+    });
+    if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
+    return withLoop(params.projectId, { message: result.message });
+  }
+
+  if (payload.action === 'attach-shot-asset') {
+    const shotId = typeof payload.shotId === 'string' ? payload.shotId : '';
+    const videoAssetId = typeof payload.videoAssetId === 'string' ? payload.videoAssetId : undefined;
+    const imageAssetId = typeof payload.imageAssetId === 'string' ? payload.imageAssetId : undefined;
+    const audioAssetId = typeof payload.audioAssetId === 'string' ? payload.audioAssetId : undefined;
+    if (!shotId || (!videoAssetId && !imageAssetId && !audioAssetId)) {
+      return Response.json({ error: '缺少镜头或素材' }, { status: 400 });
+    }
+    const result = await attachWorkbenchShotAsset({
+      projectId: params.projectId,
+      shotId,
+      videoAssetId,
+      imageAssetId,
+      audioAssetId,
+    });
+    if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
+    return withLoop(params.projectId, { message: result.message });
+  }
+
+  if (payload.action === 'mark-episode') {
+    const result = await markWorkbenchEpisode(params.projectId, payload.complete !== false);
+    if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
+    return withLoop(params.projectId, { message: result.message });
+  }
+
+  if (payload.action === 'switch-storyboard') {
+    const storyboardId = typeof payload.storyboardId === 'string' ? payload.storyboardId : '';
+    if (!storyboardId) return Response.json({ error: '缺少分镜版本' }, { status: 400 });
+    const result = await switchWorkbenchStoryboard(params.projectId, storyboardId);
+    if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
+    return withLoop(params.projectId, { message: result.message });
+  }
+
+  if (payload.action === 'retry-task') {
+    const result = await retryWorkbenchTask({
+      projectId: params.projectId,
+      request,
+      kind: typeof payload.kind === 'string' ? payload.kind : undefined,
+      targetKind: typeof payload.targetKind === 'string' ? payload.targetKind : undefined,
+      targetId: typeof payload.targetId === 'string' ? payload.targetId : undefined,
+    });
+    if (!result.ok) return Response.json({ error: result.message }, { status: result.status });
+    return withLoop(params.projectId, { message: result.message });
   }
 
   if (payload.action === 'save-workbench') {

@@ -14,6 +14,7 @@ function draft(partial: Partial<DramaDraft> = {}): DramaDraft {
       aspectRatio: '9:16',
       aspectRatioLocked: true,
       cloudBackupStatus: 'local',
+      episodeStatus: 'working',
     },
     script: {
       id: 'script-1',

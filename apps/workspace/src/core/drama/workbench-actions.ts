@@ -21,10 +21,20 @@ import {
   writeRewrittenScript,
   writeShotPrompts,
 } from './director-persist';
+import { catalogFromDraft, mentionReferenceIds, parseMentions } from '@/components/kaijing/drama/mentions';
+import { getProjectAssetById } from '@/core/workspace-lib/assets/user-assets';
+
 import { assembleEpisodeTimeline } from './assemble-episode';
 import { createDramaGateway, GatewayError, type DramaGateway } from './gateway-client';
 import { saveGeneratedAsset } from './generated-media';
-import { loadDramaDraft, type DramaDraft, type DramaDraftEntity } from './persist';
+import {
+  attachShotMedia,
+  createDramaTask,
+  finishDramaTask,
+  markEpisodeComplete,
+  switchDramaStoryboard,
+} from './loop-persist';
+import { loadDramaDraft, type DramaDraft, type DramaDraftEntity, type DramaDraftShot } from './persist';
 import { syncDramaCanvas } from './sync-canvas';
 
 export type WorkbenchActionOk = { ok: true; draft: DramaDraft; message: string };
@@ -300,6 +310,34 @@ export async function attachWorkbenchEntityAsset(input: {
   return { ok: true, draft: await reloadDraft(input.projectId), message: '已把上传的形象绑定到这张卡。' };
 }
 
+
+function localAssetUrl(projectId: string, assetId: string) {
+  return `/api/app/projects/${encodeURIComponent(projectId)}/assets/${encodeURIComponent(assetId)}`;
+}
+
+async function resolveReferenceUrls(projectId: string, assetIds: string[]): Promise<string[]> {
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const assetId of assetIds) {
+    if (!assetId || seen.has(assetId)) continue;
+    seen.add(assetId);
+    const asset = await getProjectAssetById({ projectId, assetId }).catch(() => null);
+    const url = asset?.publicUrl || localAssetUrl(projectId, assetId);
+    if (url && !urls.includes(url)) urls.push(url);
+  }
+  return urls;
+}
+
+function shotMentionIds(shot: DramaDraftShot, draft: DramaDraft): string[] {
+  const catalog = catalogFromDraft(draft);
+  const text = [shot.videoPrompt, shot.imagePrompt, shot.description, shot.dialogue]
+    .filter(Boolean)
+    .join(' ');
+  const fromText = mentionReferenceIds(parseMentions(text, catalog));
+  const stored = shot.referenceAssetIds ?? [];
+  return [...new Set([...stored, ...fromText])];
+}
+
 function entitiesOf(draft: DramaDraft, kind: 'character' | 'scene' | 'prop'): DramaDraftEntity[] {
   if (kind === 'character') return draft.characters;
   if (kind === 'scene') return draft.scenes;
@@ -339,6 +377,13 @@ export async function generateWorkbenchEntityImages(
   const failures: string[] = [];
   let succeeded = 0;
   for (const entity of targets) {
+    const taskId = await createDramaTask({
+      projectId: ctx.projectId,
+      kind: 'entity-image',
+      label: `生成${ctx.kind === 'character' ? '角色' : ctx.kind === 'scene' ? '场景' : '道具'}「${entity.name}」形象`,
+      targetKind: ctx.kind,
+      targetId: entity.id,
+    });
     try {
       const submitted = await gateway.submit({
         kind: 'image',
@@ -357,13 +402,18 @@ export async function generateWorkbenchEntityImages(
         });
         await setEntityAsset(ctx.kind, entity.id, assetId);
         succeeded += 1;
+        await finishDramaTask(taskId, { status: 'succeeded' });
       } else {
-        failures.push(`${entity.name}：${current.errorMessage || '未返回图片，不会伪造形象。'}`);
+        const message = current.errorMessage || '未返回图片，不会伪造形象。';
+        await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
+        failures.push(`${entity.name}：${message}`);
       }
     } catch (error) {
       const mapped = mapGatewayError(error);
+      const message = error instanceof Error ? error.message : '生成失败';
+      await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
       if (mapped) return mapped;
-      failures.push(`${entity.name}：${error instanceof Error ? error.message : '生成失败'}`);
+      failures.push(`${entity.name}：${message}`);
     }
   }
   await syncCanvasSafe(ctx.projectId);
@@ -392,12 +442,29 @@ export async function generateWorkbenchShotVideos(
   const failures: string[] = [];
   let succeeded = 0;
   for (const shot of targets) {
+    const taskId = await createDramaTask({
+      projectId: ctx.projectId,
+      kind: 'shot-video',
+      label: `生成第 ${shot.index + 1} 镜视频`,
+      targetKind: 'shot',
+      targetId: shot.id,
+    });
     await markShot({ shotId: shot.id, status: 'generating', errorMessage: null });
     try {
+      const referenceIds = shotMentionIds(shot, draft);
+      const references = await resolveReferenceUrls(ctx.projectId, referenceIds);
+      if (referenceIds.length) {
+        await markShot({
+          shotId: shot.id,
+          status: 'generating',
+          referenceAssetIds: referenceIds,
+        });
+      }
       const submitted = await gateway.submit({
         kind: 'video',
         prompt: shot.videoPrompt || shot.description,
         quality: draft.settings.quality,
+        references,
         idempotencyKey: `${ctx.projectId}:shot:${shot.id}:${Date.now()}`,
         metadata: { aspectRatio: draft.settings.aspectRatio, shotId: shot.id },
       });
@@ -417,16 +484,19 @@ export async function generateWorkbenchShotVideos(
           errorMessage: null,
         });
         succeeded += 1;
+        await finishDramaTask(taskId, { status: 'succeeded' });
       } else {
         const message = job.errorMessage || '未返回视频，不会伪造出片。';
         await markShot({ shotId: shot.id, status: 'failed', cloudJobId: job.id, errorMessage: message });
+        await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
         failures.push(`第 ${shot.index + 1} 镜：${message}`);
       }
     } catch (error) {
       const mapped = mapGatewayError(error);
-      if (mapped) return mapped;
       const message = error instanceof Error ? error.message : '生成失败';
       await markShot({ shotId: shot.id, status: 'failed', errorMessage: message });
+      await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
+      if (mapped) return mapped;
       failures.push(`第 ${shot.index + 1} 镜：${message}`);
     }
   }
@@ -452,4 +522,143 @@ export async function assembleSelectedShots(input: {
   });
   if (!assembled.ok) return { ok: false, status: 400, message: assembled.message };
   return { ok: true, draft: await reloadDraft(input.projectId), message: assembled.message };
+}
+
+export async function attachWorkbenchShotAsset(input: {
+  projectId: string
+  shotId: string
+  videoAssetId?: string
+  imageAssetId?: string
+  audioAssetId?: string
+}): Promise<WorkbenchActionResult> {
+  const loaded = await loadOr404(input.projectId);
+  if (loaded.ok !== 'draft') return loaded;
+  const shot = loaded.draft.storyboard?.shots.find((item) => item.id === input.shotId);
+  if (!shot) return { ok: false, status: 404, message: '找不到要绑定的镜头。' };
+  await attachShotMedia({
+    shotId: input.shotId,
+    videoAssetId: input.videoAssetId,
+    imageAssetId: input.imageAssetId,
+    audioAssetId: input.audioAssetId,
+    status: input.videoAssetId ? 'ready' : undefined,
+  });
+  await syncCanvasSafe(input.projectId);
+  return { ok: true, draft: await reloadDraft(input.projectId), message: '已把上传的素材绑定到这一镜。' };
+}
+
+export async function generateWorkbenchShotVoice(
+  ctx: WorkbenchActionContext & { shotIds?: string[] }
+): Promise<WorkbenchActionResult> {
+  const loaded = await loadOr404(ctx.projectId);
+  if (loaded.ok !== 'draft') return loaded;
+  const draft = loaded.draft;
+  const board = draft.storyboard;
+  if (!board?.shots.length) return { ok: false, status: 400, message: '还没有分镜，不能生成对白配音。' };
+  const wanted = ctx.shotIds?.length ? new Set(ctx.shotIds) : null;
+  const targets = board.shots.filter((shot) => {
+    if (wanted && !wanted.has(shot.id)) return false;
+    return Boolean(shot.dialogue?.trim());
+  });
+  if (targets.length === 0) return { ok: false, status: 400, message: '没有需要对白配音的镜头。请先填写对白。' };
+  const gateway = gatewayOf(ctx);
+  const session = await gateway.getSession();
+  if (!session.loggedIn) {
+    return { ok: false, status: 401, message: '登录后才能生成对白配音。不会伪造音频。' };
+  }
+  const failures: string[] = [];
+  let succeeded = 0;
+  for (const shot of targets) {
+    const taskId = await createDramaTask({
+      projectId: ctx.projectId,
+      kind: 'shot-audio',
+      label: `生成第 ${shot.index + 1} 镜对白配音`,
+      targetKind: 'shot',
+      targetId: shot.id,
+    });
+    try {
+      const submitted = await gateway.submit({
+        kind: 'audio',
+        prompt: shot.dialogue.trim(),
+        quality: draft.settings.quality,
+        idempotencyKey: `${ctx.projectId}:shot-audio:${shot.id}:${Date.now()}`,
+        metadata: { shotId: shot.id, voice: 'alloy' },
+      });
+      const job = await settleJob(gateway, submitted);
+      if ((job.status === 'succeeded' || job.status === 'completed') && job.result?.outputUrl) {
+        const assetId = await saveGeneratedAsset({
+          projectId: ctx.projectId,
+          outputUrl: job.result.outputUrl,
+          type: 'audio',
+          filename: `shot-${shot.index + 1}-dialogue.mp3`,
+        });
+        await attachShotMedia({ shotId: shot.id, audioAssetId: assetId });
+        await finishDramaTask(taskId, { status: 'succeeded' });
+        succeeded += 1;
+      } else {
+        const message = job.errorMessage || '未返回音频，不会伪造配音。';
+        await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
+        failures.push(`第 ${shot.index + 1} 镜：${message}`);
+      }
+    } catch (error) {
+      const mapped = mapGatewayError(error);
+      const message = error instanceof Error ? error.message : '生成失败';
+      await finishDramaTask(taskId, { status: 'failed', errorMessage: message });
+      if (mapped) return mapped;
+      failures.push(`第 ${shot.index + 1} 镜：${message}`);
+    }
+  }
+  const message = failures.length
+    ? `已生成 ${succeeded} 段对白配音。${failures.join(' ')}`
+    : `已生成 ${succeeded} 段对白配音并保存到本机素材。`;
+  return { ok: true, draft: await reloadDraft(ctx.projectId), message };
+}
+
+export async function markWorkbenchEpisode(
+  projectId: string,
+  complete: boolean
+): Promise<WorkbenchActionResult> {
+  const loaded = await loadOr404(projectId);
+  if (loaded.ok !== 'draft') return loaded;
+  if (complete) {
+    const hasMedia = Boolean(
+      loaded.draft.storyboard?.shots.some((shot) => shot.videoAssetId) ||
+        loaded.draft.settings.episodeStatus === 'complete'
+    );
+    if (!hasMedia) {
+      return { ok: false, status: 400, message: '至少先有一镜真实视频，再标记完成。' };
+    }
+  }
+  const draft = await markEpisodeComplete(projectId, complete);
+  return {
+    ok: true,
+    draft,
+    message: complete ? '已把这一集标记为完成。' : '已取消完成标记，可以继续修改。',
+  };
+}
+
+export async function switchWorkbenchStoryboard(
+  projectId: string,
+  storyboardId: string
+): Promise<WorkbenchActionResult> {
+  const switched = await switchDramaStoryboard(projectId, storyboardId);
+  if (!switched.ok) return { ok: false, status: switched.status, message: switched.message };
+  return { ok: true, draft: switched.draft, message: '已切换到所选的分镜版本。' };
+}
+
+export async function retryWorkbenchTask(
+  ctx: WorkbenchActionContext & { taskId?: string; kind?: string; targetKind?: string; targetId?: string }
+): Promise<WorkbenchActionResult> {
+  if (ctx.kind === 'entity-image' || ctx.targetKind === 'character' || ctx.targetKind === 'scene' || ctx.targetKind === 'prop') {
+    const kind = ctx.targetKind === 'scene' || ctx.targetKind === 'prop' ? ctx.targetKind : 'character';
+    return generateWorkbenchEntityImages({
+      ...ctx,
+      kind,
+      entityIds: ctx.targetId ? [ctx.targetId] : undefined,
+      onlyMissing: false,
+    });
+  }
+  if (ctx.kind === 'shot-audio') {
+    return generateWorkbenchShotVoice({ ...ctx, shotIds: ctx.targetId ? [ctx.targetId] : undefined });
+  }
+  return generateWorkbenchShotVideos({ ...ctx, shotIds: ctx.targetId ? [ctx.targetId] : undefined });
 }

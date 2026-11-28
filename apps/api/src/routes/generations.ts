@@ -46,7 +46,7 @@ const JobSchema = z
 
 const CreateSchema = z
   .object({
-    kind: z.enum(["text", "image", "video"]),
+    kind: z.enum(["text", "image", "video", "audio"]),
     prompt: z.string().min(1).max(8000),
     quality: z.enum(["fast", "standard"]).optional(),
     references: z.array(z.string().max(2_000_000)).max(8).optional(),
@@ -198,7 +198,7 @@ async function refreshJob(row: JobRow, headers: Headers): Promise<JobRow> {
   const providerJobId = stored?.providerJobId
   if (!providerJobId) return row
   const result = await getOpenRouteGeneration(providerJobId, {
-    kind: row.kind === "video" || row.kind === "image" || row.kind === "text" ? row.kind : undefined,
+    kind: row.kind === "video" || row.kind === "image" || row.kind === "text" || row.kind === "audio" ? row.kind : undefined,
     apiKey: requestOpenRouteKey(headers),
   })
   return applyProviderResult(row, result)

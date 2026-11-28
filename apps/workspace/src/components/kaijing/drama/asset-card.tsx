@@ -18,6 +18,7 @@ export function DramaAssetCard({
   onChange,
   onGenerate,
   onUpload,
+  onTurnaround,
 }: {
   kindLabel: string
   asset: EditableAsset
@@ -26,6 +27,7 @@ export function DramaAssetCard({
   onChange: (next: EditableAsset) => void
   onGenerate?: () => void
   onUpload?: (file: File) => void
+  onTurnaround?: () => void
 }) {
   const status = asset.assetId ? '已有形象' : '待生成';
   return (
@@ -82,6 +84,11 @@ export function DramaAssetCard({
                 }}
               />
             </label>
+          ) : null}
+          {onTurnaround ? (
+            <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={onTurnaround}>
+              记下三视图需求
+            </Button>
           ) : null}
         </div>
       </div>

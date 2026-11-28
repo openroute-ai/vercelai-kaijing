@@ -83,3 +83,35 @@ test("KAIJING_API_KEY 可作为共用密钥别名", () => {
   assert.equal(config.baseUrl, "https://api.openroute.cn/v1")
   assert.equal(config.apiKey, "sk-alias")
 })
+
+test("对白配音走公开的 /audio/speech，返回音频数据而不伪造", async () => {
+  const calls: string[] = []
+  const client = createOpenRouteClient({
+    env: {
+      OPENROUTE_API_URL: "https://api.openroute.cn/v1",
+      OPENROUTE_API_KEY: "sk-test-platform",
+    },
+    fetch: async (input, init) => {
+      const url = String(input)
+      calls.push(url)
+      const headers = new Headers(init?.headers)
+      assert.match(headers.get("authorization") || "", /Bearer sk-test-platform/)
+      if (url.endsWith("/audio/speech")) {
+        const body = JSON.parse(String(init?.body)) as { input?: string; model?: string }
+        assert.equal(body.input, "今夜雨很大")
+        assert.ok(body.model)
+        return new Response(Buffer.from("fake-mp3"), { status: 200, headers: { "content-type": "audio/mpeg" } })
+      }
+      return new Response("not found", { status: 404 })
+    },
+  })
+  const audio = await client.submit({ kind: "audio", prompt: "今夜雨很大" })
+  assert.equal(audio.status, "succeeded")
+  assert.match(audio.outputUrl ?? "", /^data:audio\/mpeg;base64,/)
+  assert.ok(calls.includes("https://api.openroute.cn/v1/audio/speech"))
+
+  const missing = await createOpenRouteClient({ env: {} }).submit({ kind: "audio", prompt: "今夜雨很大" })
+  assert.equal(missing.status, "failed")
+  assert.equal(missing.outputUrl, undefined)
+  assert.equal(missing.error, OPENROUTE_MISSING_KEY)
+})

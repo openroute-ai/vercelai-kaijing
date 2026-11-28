@@ -19,14 +19,14 @@ export async function downloadGeneratedMedia(outputUrl: string): Promise<{
   if (!response.ok) throw new Error(`下载生成结果失败（${response.status}）。`);
   const mimeType = response.headers.get('content-type') || 'application/octet-stream';
   const bytes = new Uint8Array(await response.arrayBuffer());
-  const filename = mimeType.includes('video') ? 'shot.mp4' : mimeType.includes('png') ? 'character.png' : 'media.bin';
+  const filename = mimeType.includes('video') ? 'shot.mp4' : mimeType.includes('audio') || mimeType.includes('mpeg') ? 'dialogue.mp3' : mimeType.includes('png') ? 'character.png' : 'media.bin';
   return { bytes, mimeType, filename };
 }
 
 export async function saveGeneratedAsset(input: {
   projectId: string
   outputUrl: string
-  type: 'image' | 'video'
+  type: 'image' | 'video' | 'audio'
   filename?: string
 }) {
   const media = await downloadGeneratedMedia(input.outputUrl);

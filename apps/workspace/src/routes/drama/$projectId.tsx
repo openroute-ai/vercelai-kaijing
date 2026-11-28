@@ -2,10 +2,11 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { DramaAssetCard, type EditableAsset } from '@/components/kaijing/drama/asset-card';
-import { DramaExportGallery } from '@/components/kaijing/drama/export-gallery';
+import { DramaExportGallery, type EpisodeExportItem } from '@/components/kaijing/drama/export-gallery';
 import { DramaStageNav } from '@/components/kaijing/drama/stage-nav';
 import { type EditableShot } from '@/components/kaijing/drama/shot-card';
-import { DramaVideoStudio } from '@/components/kaijing/drama/video-studio';
+import { DramaTaskDrawer, type WorkbenchTask } from '@/components/kaijing/drama/task-drawer';
+import { DramaVideoStudio, type StoryboardVersion } from '@/components/kaijing/drama/video-studio';
 import {
   inferWorkbenchStep,
   type WorkbenchStepId,
@@ -41,6 +42,8 @@ type Draft = {
     aspectRatio: '9:16' | '16:9';
     aspectRatioLocked: boolean;
     cloudBackupStatus: string;
+    episodeStatus?: 'working' | 'complete';
+    completedAt?: string | Date | null;
   };
   script: {
     title: string;
@@ -94,6 +97,11 @@ function DramaEditorPage() {
   const [busyEntity, setBusyEntity] = useState<string | null>(null);
   const [selectedShot, setSelectedShot] = useState(0);
   const [selectedExportIds, setSelectedExportIds] = useState<string[]>([]);
+  const [tasks, setTasks] = useState<WorkbenchTask[]>([]);
+  const [exports, setExports] = useState<EpisodeExportItem[]>([]);
+  const [storyboards, setStoryboards] = useState<StoryboardVersion[]>([]);
+  const [episodeStatus, setEpisodeStatus] = useState<'working' | 'complete'>('working');
+  const [taskOpen, setTaskOpen] = useState(false);
 
   function applyDraft(draft: Draft, options?: { keepStep?: boolean }) {
     if (draft.settings) {
@@ -101,6 +109,7 @@ function DramaEditorPage() {
       setAspectRatio(draft.settings.aspectRatio || '9:16');
       setLocked(draft.settings.aspectRatioLocked);
       setBackup(draft.settings.cloudBackupStatus || 'local');
+      setEpisodeStatus(draft.settings.episodeStatus === 'complete' ? 'complete' : 'working');
     }
     if (draft.script) {
       setTitle(draft.script.title);
@@ -129,6 +138,16 @@ function DramaEditorPage() {
     }
   }
 
+  function applyLoop(payload: {
+    tasks?: WorkbenchTask[]
+    exports?: EpisodeExportItem[]
+    storyboards?: StoryboardVersion[]
+  }) {
+    if (payload.tasks) setTasks(payload.tasks);
+    if (payload.exports) setExports(payload.exports);
+    if (payload.storyboards) setStoryboards(payload.storyboards);
+  }
+
   async function load() {
     setStatus('正在读取本机稿…');
     try {
@@ -136,6 +155,9 @@ function DramaEditorPage() {
         draft: Draft | null
         steps?: StepState[]
         storage?: { message?: string }
+        tasks?: WorkbenchTask[]
+        exports?: EpisodeExportItem[]
+        storyboards?: StoryboardVersion[]
       }>(`/api/app/projects/${projectId}/drama`);
       if (!data.draft) {
         setMissing(true);
@@ -143,6 +165,7 @@ function DramaEditorPage() {
         return;
       }
       applyDraft(data.draft);
+      applyLoop(data);
       if (data.steps?.length) setSteps(data.steps);
       if (data.storage?.message) setStorageMessage(data.storage.message);
       setStatus(
@@ -181,6 +204,7 @@ function DramaEditorPage() {
           durationMs: shot.durationMs,
           imagePrompt: shot.imagePrompt,
           videoPrompt: shot.videoPrompt,
+          referenceAssetIds: shot.referenceAssetIds,
         })),
       },
       characters,
@@ -220,11 +244,20 @@ function DramaEditorPage() {
     setRunMessage('正在处理…');
     try {
       await apiJsonPost(`/api/app/projects/${projectId}/drama`, workbenchPayload);
-      const data = await apiJsonPost<{ draft?: Draft; message?: string; steps?: StepState[]; error?: string }>(
+      const data = await apiJsonPost<{
+        draft?: Draft
+        message?: string
+        steps?: StepState[]
+        error?: string
+        tasks?: WorkbenchTask[]
+        exports?: EpisodeExportItem[]
+        storyboards?: StoryboardVersion[]
+      }>(
         `/api/app/projects/${projectId}/drama`,
         { action, ...payload }
       );
       if (data.draft) applyDraft(data.draft, { keepStep: true });
+      applyLoop(data);
       if (data.steps?.length) setSteps(data.steps);
       setRunMessage(data.message || '已完成');
       if (nextStep) setStep(nextStep);
@@ -268,10 +301,57 @@ function DramaEditorPage() {
     }
   }
 
-  async function exportEpisode() {
-    setExporting(true);
-    setRunMessage('正在导出整集 MP4…');
+  async function uploadShot(shot: EditableShot, file: File) {
+    if (!shot.id) {
+      setRunMessage('请先保存分镜，再上传镜头视频。');
+      await save(undefined, { silent: true });
+      return;
+    }
+    setBusy(true);
     try {
+      const asset = await uploadLocalProjectAsset({ projectId, file, assetClass: 'original' });
+      const data = await apiJsonPost<{
+        draft?: Draft
+        message?: string
+        tasks?: WorkbenchTask[]
+        exports?: EpisodeExportItem[]
+        storyboards?: StoryboardVersion[]
+      }>(`/api/app/projects/${projectId}/drama`, {
+        action: 'attach-shot-asset',
+        shotId: shot.id,
+        videoAssetId: asset.id,
+      });
+      if (data.draft) applyDraft(data.draft, { keepStep: true });
+      applyLoop(data);
+      setRunMessage(data.message || '已上传镜头视频');
+    } catch (error) {
+      setRunMessage(error instanceof Error ? error.message : '上传失败');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportEpisode(options?: { shotIds?: string[]; title?: string; assembleFirst?: boolean }) {
+    setExporting(true);
+    setRunMessage(options?.shotIds?.length ? '正在导出已选镜头…' : '正在导出整集 MP4…');
+    try {
+      if (options?.assembleFirst && options.shotIds?.length) {
+        const assembled = await apiJsonPost<{
+          draft?: Draft
+          message?: string
+          error?: string
+          tasks?: WorkbenchTask[]
+          exports?: EpisodeExportItem[]
+          storyboards?: StoryboardVersion[]
+        }>(`/api/app/projects/${projectId}/drama`, {
+          action: 'assemble-episode',
+          shotIds: options.shotIds,
+          allowPartial: true,
+        });
+        if (assembled.draft) applyDraft(assembled.draft, { keepStep: true });
+        applyLoop(assembled);
+        setHasTimeline(true);
+      }
       const timelinePayload = await apiJsonGet<{
         timeline: { document: TimelineDocument; version: number } | null
       }>(`/api/app/projects/${projectId}/timeline`);
@@ -292,11 +372,20 @@ function DramaEditorPage() {
         durationMs: document.duration * 1000,
         metadata: { operation: 'episode_render', timelineId: document.id },
       });
-      await apiJsonPost(`/api/app/projects/${projectId}/drama`, {
+      const recorded = await apiJsonPost<{
+        tasks?: WorkbenchTask[]
+        exports?: EpisodeExportItem[]
+        storyboards?: StoryboardVersion[]
+        draft?: Draft
+      }>(`/api/app/projects/${projectId}/drama`, {
         action: 'record-episode-render',
         assetId: asset.id,
         publicUrl: asset.publicUrl,
+        title: options?.title || `${title || '成片'}`,
+        shotIds: options?.shotIds,
       });
+      applyLoop(recorded);
+      if (recorded.draft) applyDraft(recorded.draft, { keepStep: true });
       setRunMessage(
         savedFile.method === 'picker'
           ? `整集 MP4 已保存到你选择的位置（${savedFile.filename}），并在这台电脑的项目目录里留了一份本机副本。`
@@ -373,12 +462,18 @@ function DramaEditorPage() {
             返回短剧列表
           </Link>
           <h1 className="text-lg font-semibold">{title || '做一集'}</h1>
+          {episodeStatus === 'complete' ? (
+            <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] text-emerald-100">已完成</span>
+          ) : null}
           {locked ? (
             <span className="text-xs text-white/45">画面比例已锁定为 {aspectRatio}</span>
           ) : (
             <span className="text-xs text-white/45">第一次保存后将锁定画面比例</span>
           )}
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setTaskOpen(true)}>
+              任务{tasks.some((item) => item.status === 'running' || item.status === 'failed') ? ' · 有更新' : ''}
+            </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => void save()}>
               保存到本机
             </Button>
@@ -583,6 +678,14 @@ function DramaEditorPage() {
                           void runAction('generate-entity-image', { kind: 'character', entityId: item.id, onlyMissing: false });
                         }}
                         onUpload={(item, file) => void uploadEntity('character', item, file)}
+                        onTurnaround={(index, item) => {
+                          if ((item.visualNotes || '').includes('三视图')) return;
+                          updateAsset('characters', index, {
+                            ...item,
+                            visualNotes: `${item.visualNotes || ''} 需要角色三视图（正面 / 侧面 / 背面）。`.trim(),
+                          });
+                          setRunMessage('已在形象说明里记下三视图需求，生成时会一并写入提示词。完整三视图渲染尚未提供。');
+                        }}
                       />
                       <AssetSection
                         title="场景"
@@ -654,6 +757,7 @@ function DramaEditorPage() {
                       characters={characters}
                       scenes={scenes}
                       props={props}
+                      storyboards={storyboards}
                       busy={busy}
                       onSelect={setSelectedShot}
                       onChangeShot={(index, next) =>
@@ -670,6 +774,16 @@ function DramaEditorPage() {
                         void runAction('generate-shot-video', { shotId: shot.id });
                       }}
                       onGenerateMissing={() => void runAction('generate-shot-video')}
+                      onGenerateVoice={(shot) => {
+                        if (!shot.id) {
+                          setRunMessage('请先保存分镜，再生成对白配音。');
+                          void save();
+                          return;
+                        }
+                        void runAction('generate-shot-audio', { shotId: shot.id });
+                      }}
+                      onUploadShot={(shot, file) => void uploadShot(shot, file)}
+                      onSwitchStoryboard={(storyboardId) => void runAction('switch-storyboard', { storyboardId })}
                     />
                   )}
                   {steps.length ? (
@@ -693,6 +807,8 @@ function DramaEditorPage() {
                   projectId={projectId}
                   shots={shots}
                   selectedIds={selectedExportIds}
+                  exports={exports}
+                  episodeComplete={episodeStatus === 'complete'}
                   onToggle={(id) =>
                     setSelectedExportIds((current) =>
                       current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
@@ -711,6 +827,14 @@ function DramaEditorPage() {
                     void runAction('assemble-episode', { shotIds: selectedExportIds, allowPartial: true });
                   }}
                   onExport={() => void exportEpisode()}
+                  onExportSelected={() =>
+                    void exportEpisode({
+                      shotIds: selectedExportIds,
+                      title: `${title || '成片'}-选中镜头`,
+                      assembleFirst: true,
+                    })
+                  }
+                  onMarkComplete={(complete) => void runAction('mark-episode', { complete })}
                   exporting={exporting}
                   hasTimeline={hasTimeline}
                   assembleComplete={assembleComplete}
@@ -736,6 +860,20 @@ function DramaEditorPage() {
           </div>
         </div>
       </div>
+      <DramaTaskDrawer
+        open={taskOpen}
+        tasks={tasks}
+        busy={busy}
+        onClose={() => setTaskOpen(false)}
+        onRetry={(task) => {
+          setTaskOpen(false);
+          void runAction('retry-task', {
+            kind: task.kind,
+            targetKind: task.targetKind,
+            targetId: task.targetId,
+          });
+        }}
+      />
     </BeatApiProductShell>
   );
 }
@@ -751,6 +889,7 @@ function AssetSection({
   onAdd,
   onGenerate,
   onUpload,
+  onTurnaround,
 }: {
   title: string
   kindLabel: string
@@ -762,6 +901,7 @@ function AssetSection({
   onAdd: () => void
   onGenerate: (item: EditableAsset) => void
   onUpload: (item: EditableAsset, file: File) => void
+  onTurnaround?: (index: number, item: EditableAsset) => void
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -785,6 +925,7 @@ function AssetSection({
               onChange={(next) => onChange(index, next)}
               onGenerate={item.id ? () => onGenerate(item) : undefined}
               onUpload={(file) => onUpload(item, file)}
+              onTurnaround={onTurnaround ? () => onTurnaround(index, item) : undefined}
             />
           ))}
         </div>

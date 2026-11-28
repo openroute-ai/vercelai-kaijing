@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { user } from "./auth-schema"
 
-export const generationJobKinds = ["text", "image", "video"] as const
+export const generationJobKinds = ["text", "image", "video", "audio"] as const
 export type GenerationJobKind = (typeof generationJobKinds)[number]
 
 export const generationJobStatuses = [

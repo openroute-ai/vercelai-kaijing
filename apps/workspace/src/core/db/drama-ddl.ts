@@ -21,6 +21,8 @@ export const dramaTableStatements = [
     quality TEXT NOT NULL DEFAULT 'standard',
     aspect_ratio TEXT NOT NULL DEFAULT '9:16',
     cloud_backup_status TEXT NOT NULL DEFAULT 'local',
+    episode_status TEXT NOT NULL DEFAULT 'working',
+    completed_at INTEGER,
     updated_at INTEGER NOT NULL DEFAULT ${now}
   )`,
   `CREATE TABLE IF NOT EXISTS drama_characters (
@@ -75,6 +77,7 @@ export const dramaTableStatements = [
     status TEXT NOT NULL DEFAULT 'draft',
     image_asset_id TEXT,
     video_asset_id TEXT,
+    audio_asset_id TEXT,
     error_message TEXT,
     cloud_job_id TEXT,
     created_at INTEGER NOT NULL DEFAULT ${now},
@@ -91,4 +94,27 @@ export const dramaTableStatements = [
     created_at INTEGER NOT NULL DEFAULT ${now},
     updated_at INTEGER NOT NULL DEFAULT ${now}
   )`,
+  `CREATE TABLE IF NOT EXISTS drama_episode_exports (
+    id TEXT PRIMARY KEY NOT NULL,
+    project_id TEXT NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT '成片',
+    asset_id TEXT NOT NULL,
+    public_url TEXT,
+    shot_ids_json TEXT,
+    created_at INTEGER NOT NULL DEFAULT ${now}
+  )`,
+  `CREATE INDEX IF NOT EXISTS drama_episode_exports_project_idx ON drama_episode_exports(project_id)`,
+  `CREATE TABLE IF NOT EXISTS drama_tasks (
+    id TEXT PRIMARY KEY NOT NULL,
+    project_id TEXT NOT NULL REFERENCES project(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    label TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    error_message TEXT,
+    target_kind TEXT,
+    target_id TEXT,
+    created_at INTEGER NOT NULL DEFAULT ${now},
+    updated_at INTEGER NOT NULL DEFAULT ${now}
+  )`,
+  `CREATE INDEX IF NOT EXISTS drama_tasks_project_idx ON drama_tasks(project_id)`,
 ];

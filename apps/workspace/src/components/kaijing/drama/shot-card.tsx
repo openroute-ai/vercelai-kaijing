@@ -12,6 +12,8 @@ export type EditableShot = {
   videoPrompt?: string | null
   imageAssetId?: string | null
   videoAssetId?: string | null
+  audioAssetId?: string | null
+  referenceAssetIds?: string[]
   errorMessage?: string | null
 };
 

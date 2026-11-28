@@ -35,6 +35,8 @@ export type DramaDraftShot = {
   videoAssetId?: string | null;
   errorMessage?: string | null;
   cloudJobId?: string | null;
+  audioAssetId?: string | null;
+  referenceAssetIds?: string[];
 };
 
 export type DramaDraftEntity = {
@@ -48,6 +50,20 @@ export type DramaDraftEntity = {
 export const DRAMA_ASPECT_RATIOS = ['9:16', '16:9'] as const;
 export type DramaAspectRatio = (typeof DRAMA_ASPECT_RATIOS)[number];
 
+
+function parseReferenceIds(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return parseReferenceIds(parsed);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 export function isDramaAspectRatio(value: unknown): value is DramaAspectRatio {
   return value === '9:16' || value === '16:9';
 }
@@ -59,6 +75,8 @@ export type DramaDraft = {
     aspectRatio: DramaAspectRatio;
     aspectRatioLocked: boolean;
     cloudBackupStatus: string;
+    episodeStatus: 'working' | 'complete';
+    completedAt?: Date | null;
   };
   script: {
     id: string;
@@ -158,6 +176,8 @@ async function readDraft(db: Database, projectId: string): Promise<DramaDraft | 
       aspectRatio,
       aspectRatioLocked: Boolean(pointer),
       cloudBackupStatus: pointer?.cloudBackupStatus || 'local',
+      episodeStatus: pointer && 'episodeStatus' in pointer && pointer.episodeStatus === 'complete' ? 'complete' : 'working',
+      completedAt: pointer && 'completedAt' in pointer ? (pointer.completedAt as Date | null) : null,
     },
     script: scriptRow
       ? {
@@ -186,6 +206,8 @@ async function readDraft(db: Database, projectId: string): Promise<DramaDraft | 
             videoAssetId: shot.videoAssetId,
             errorMessage: shot.errorMessage,
             cloudJobId: shot.cloudJobId,
+            audioAssetId: 'audioAssetId' in shot ? (shot.audioAssetId as string | null) : null,
+            referenceAssetIds: parseReferenceIds(shot.referenceAssetIds),
           })),
         }
       : null,
@@ -315,20 +337,28 @@ export async function saveDramaDraft(
     }
 
     if (storyboard.value.shots.length > 0) {
+      const rawShots = Array.isArray((input.storyboard as { shots?: unknown[] } | null)?.shots)
+        ? ((input.storyboard as { shots: Array<Record<string, unknown>> }).shots)
+        : [];
       await db.insert(dramaShots).values(
-        storyboard.value.shots.map((shot, index) => ({
-          id: randomUUID(),
-          storyboardId: storyboardId!,
-          projectId,
-          index,
-          description: shot.description,
-          dialogue: shot.dialogue,
-          durationMs: shot.durationMs,
-          referenceAssetIds: [],
-          status: 'draft',
-          createdAt: now,
-          updatedAt: now,
-        }))
+        storyboard.value.shots.map((shot, index) => {
+          const raw = rawShots[index] ?? {};
+          return {
+            id: randomUUID(),
+            storyboardId: storyboardId!,
+            projectId,
+            index,
+            description: shot.description,
+            dialogue: shot.dialogue,
+            durationMs: shot.durationMs,
+            referenceAssetIds: Array.isArray(raw.referenceAssetIds) ? raw.referenceAssetIds : [],
+            imagePrompt: typeof raw.imagePrompt === 'string' ? raw.imagePrompt : null,
+            videoPrompt: typeof raw.videoPrompt === 'string' ? raw.videoPrompt : null,
+            status: 'draft',
+            createdAt: now,
+            updatedAt: now,
+          };
+        })
       );
     }
 

@@ -98,3 +98,69 @@ test('工作台保存会保留已生成的镜头素材，并写回可编辑的�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('保存工作台时保留镜头素材，同时写回用户改过的提示词和资产绑定', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kaijing-workbench-mentions-'));
+  const previous = process.env.BEATDESIGN_DATA_DIR;
+  process.env.BEATDESIGN_DATA_DIR = dir;
+  try {
+    await applyBaseSchema(join(dir, 'local.db'));
+    const { resetLocalDbForTests } = await import('../db/index.ts');
+    const { createProject } = await import('../projects/projects.ts');
+    const { saveDramaDraft } = await import('./persist.ts');
+    const { saveDramaWorkbenchDraft } = await import('./workbench-persist.ts');
+    const { getDb } = await import('../workspace-lib/db-adapter.ts');
+    const { dramaShots } = await import('../../config/db/schema.ts');
+
+    const created = await createProject({ name: '提及保存' });
+    const saved = await saveDramaDraft(created.id, {
+      script: {
+        title: '雨夜',
+        sourceKind: 'one_liner',
+        sourceText: '小明在雨巷回头',
+        body: '小明站住。',
+      },
+      storyboard: {
+        title: '第一版',
+        shots: [{ description: '小明站住', dialogue: '', durationMs: 3000, videoPrompt: '旧提示' }],
+      },
+    });
+    assert.equal(saved.ok, true);
+    if (!saved.ok) return;
+    const firstShot = saved.draft.storyboard!.shots[0]!;
+    const db = await getDb();
+    await db
+      .update(dramaShots)
+      .set({ status: 'ready', videoAssetId: 'kept-video', audioAssetId: 'kept-audio' })
+      .where(eq(dramaShots.id, firstShot.id));
+
+    const next = await saveDramaWorkbenchDraft(created.id, {
+      script: saved.draft.script!,
+      storyboard: {
+        title: '第一版',
+        shots: [
+          {
+            id: firstShot.id,
+            description: '小明站住',
+            dialogue: '',
+            durationMs: 3000,
+            videoPrompt: '@小明 站在 @雨巷',
+            referenceAssetIds: ['img-ming'],
+          },
+        ],
+      },
+    });
+    assert.equal(next.ok, true);
+    if (!next.ok) return;
+    const kept = next.draft.storyboard?.shots[0];
+    assert.equal(kept?.videoAssetId, 'kept-video');
+    assert.equal(kept?.audioAssetId, 'kept-audio');
+    assert.equal(kept?.videoPrompt, '@小明 站在 @雨巷');
+    assert.deepEqual(kept?.referenceAssetIds, ['img-ming']);
+  } finally {
+    process.env.BEATDESIGN_DATA_DIR = previous;
+    const { resetLocalDbForTests } = await import('../db/index.ts');
+    await resetLocalDbForTests();
+    await rm(dir, { recursive: true, force: true });
+  }
+});

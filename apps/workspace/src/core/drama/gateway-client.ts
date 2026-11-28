@@ -39,7 +39,7 @@ export type DramaGateway = {
     idempotencyKey?: string
   }): Promise<DirectorTextResult>
   submit(input: {
-    kind: 'text' | 'image' | 'video'
+    kind: 'text' | 'image' | 'video' | 'audio'
     prompt: string
     quality?: string
     references?: string[]

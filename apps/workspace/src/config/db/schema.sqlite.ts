@@ -397,6 +397,8 @@ export const dramaProjects = sqliteTable('drama_projects', {
   quality: text('quality').notNull().default('standard'),
   aspectRatio: text('aspect_ratio').notNull().default('9:16'),
   cloudBackupStatus: text('cloud_backup_status').notNull().default('local'),
+  episodeStatus: text('episode_status').notNull().default('working'),
+  completedAt: integer('completed_at', { mode: 'timestamp_ms' }),
   updatedAt: dramaTimestamp,
 });
 
@@ -510,6 +512,7 @@ export const dramaShots = sqliteTable(
     status: text('status').notNull().default('draft'),
     imageAssetId: text('image_asset_id'),
     videoAssetId: text('video_asset_id'),
+    audioAssetId: text('audio_asset_id'),
     errorMessage: text('error_message'),
     cloudJobId: text('cloud_job_id'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
@@ -552,3 +555,45 @@ export type Generation = typeof generationHistory.$inferSelect;
 export type NewGeneration = typeof generationHistory.$inferInsert;
 export type GenerationUploadIntent = typeof generationUploadIntent.$inferSelect;
 export type GenerationIntentUpload = typeof generationIntentUpload.$inferSelect;
+
+
+export const dramaEpisodeExports = sqliteTable(
+  'drama_episode_exports',
+  {
+    id: text('id').primaryKey(),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    title: text('title').notNull().default('成片'),
+    assetId: text('asset_id').notNull(),
+    publicUrl: text('public_url'),
+    shotIdsJson: text('shot_ids_json'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [index('drama_episode_exports_project_idx').on(table.projectId)]
+);
+
+export const dramaTasks = sqliteTable(
+  'drama_tasks',
+  {
+    id: text('id').primaryKey(),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    label: text('label').notNull(),
+    status: text('status').notNull().default('queued'),
+    errorMessage: text('error_message'),
+    targetKind: text('target_kind'),
+    targetId: text('target_id'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [index('drama_tasks_project_idx').on(table.projectId)]
+);

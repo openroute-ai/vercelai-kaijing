@@ -8,7 +8,7 @@ export const DEFAULT_OPENROUTE_API_URL = "https://api.openroute.cn/v1"
 export const OPENROUTE_MISSING_KEY =
   "尚未配置 OpenRoute 平台密钥（OPENROUTE_API_KEY 或 KAIJING_API_KEY）。普通路径默认走平台网关，请运营配置一把 sk- 密钥；你也可以在高级设置里填写自己的 OpenRoute sk- 密钥。不会伪造图片或视频。"
 
-export type OpenRouteGenerationKind = "text" | "image" | "video"
+export type OpenRouteGenerationKind = "text" | "image" | "video" | "audio"
 
 export type OpenRouteGenerationResult = {
   jobId: string
@@ -25,6 +25,7 @@ export type OpenRouteClientOptions = {
   textModel?: string
   imageModel?: string
   videoModel?: string
+  audioModel?: string
   referer?: string
   title?: string
   fetch?: typeof fetch
@@ -75,6 +76,7 @@ export function resolveOpenRouteConfig(options: OpenRouteClientOptions = {}) {
       firstDefined(options.imageModel, env.OPENROUTE_IMAGE_MODEL, env.KAIJING_IMAGE_MODEL) ||
       "qwen/qwen-image-plus",
     videoModel: firstDefined(options.videoModel, env.OPENROUTE_VIDEO_MODEL, env.KAIJING_VIDEO_MODEL),
+    audioModel: firstDefined(options.audioModel, env.OPENROUTE_AUDIO_MODEL, env.KAIJING_AUDIO_MODEL) || "openai/tts-1",
     referer: options.referer || "https://vercelai.cn",
     title: options.title || "Kaijing",
   }
@@ -217,6 +219,39 @@ export function createOpenRouteClient(options: OpenRouteClientOptions = {}) {
           status: "succeeded",
           outputUrl,
           mimeType: "image/png",
+        }
+      }
+
+      if (input.kind === "audio") {
+        const voice = typeof input.metadata?.voice === "string" && input.metadata.voice.trim()
+          ? input.metadata.voice.trim()
+          : "alloy"
+        const response = await fetchImpl(`${config.baseUrl}/audio/speech`, {
+          method: "POST",
+          headers: headers(config.apiKey, config),
+          body: JSON.stringify({
+            model: config.audioModel,
+            input: input.prompt,
+            voice,
+            response_format: "mp3",
+          }),
+        })
+        if (!response.ok) {
+          return { jobId: "openroute-audio", status: "failed", error: `对白配音失败：${await readError(response)}` }
+        }
+        const mimeType = response.headers.get("content-type") || "audio/mpeg"
+        if (mimeType.includes("json")) {
+          return { jobId: "openroute-audio", status: "failed", error: `对白配音失败：${await readError(response)}` }
+        }
+        const bytes = Buffer.from(await response.arrayBuffer())
+        if (!bytes.length) {
+          return { jobId: "openroute-audio", status: "failed", error: "OpenRoute 没有返回音频数据。" }
+        }
+        return {
+          jobId: "openroute-audio",
+          status: "succeeded",
+          outputUrl: `data:${mimeType.split(";")[0] || "audio/mpeg"};base64,${bytes.toString("base64")}`,
+          mimeType: mimeType.split(";")[0] || "audio/mpeg",
         }
       }
 

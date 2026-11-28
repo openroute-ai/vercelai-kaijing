@@ -10,6 +10,7 @@ export const CREDIT_COSTS = {
   text: "5.0000",
   image: "10.0000",
   video: "40.0000",
+  audio: "8.0000",
 } as const
 
 export const PLACEHOLDER_CREDIT_COSTS = {
@@ -17,6 +18,7 @@ export const PLACEHOLDER_CREDIT_COSTS = {
   episodeText: "20.0000",
   characterImage: CREDIT_COSTS.image,
   shotVideo: CREDIT_COSTS.video,
+  dialogueAudio: CREDIT_COSTS.audio,
 } as const
 
 export const PLACEHOLDER_CREDIT_PLANS = [

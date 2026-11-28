@@ -43,12 +43,21 @@ export async function configureLocalSqlite(
           if (!dramaProjectNames.has('cloud_backup_status')) {
             statements.push("ALTER TABLE drama_projects ADD COLUMN cloud_backup_status TEXT NOT NULL DEFAULT 'local'");
           }
+          if (!dramaProjectNames.has('episode_status')) {
+            statements.push("ALTER TABLE drama_projects ADD COLUMN episode_status TEXT NOT NULL DEFAULT 'working'");
+          }
+          if (!dramaProjectNames.has('completed_at')) {
+            statements.push('ALTER TABLE drama_projects ADD COLUMN completed_at INTEGER');
+          }
         }
 
         const shotColumns = await client.execute('PRAGMA table_info(drama_shots)');
         const shotNames = new Set(shotColumns.rows.map((row) => String(row.name)));
         if (shotNames.size && !shotNames.has('cloud_job_id')) {
           statements.push('ALTER TABLE drama_shots ADD COLUMN cloud_job_id TEXT');
+        }
+        if (shotNames.size && !shotNames.has('audio_asset_id')) {
+          statements.push('ALTER TABLE drama_shots ADD COLUMN audio_asset_id TEXT');
         }
         const runColumns = await client.execute('PRAGMA table_info(drama_runs)');
         const runNames = new Set(runColumns.rows.map((row) => String(row.name)));

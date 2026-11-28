@@ -18,6 +18,7 @@ import {
   type AssemblableShot,
 } from './assemble-plan';
 import type { DramaDraft, DramaDraftShot } from './persist';
+import { recordDramaExport } from './loop-persist';
 
 export { selectEpisodeExportDocument, planEpisodeAssembly, listReadyEpisodeShots };
 
@@ -164,6 +165,12 @@ export async function renderAssembledEpisode(input: {
         expectedRevision: loaded.version,
       });
     }
+    await recordDramaExport({
+      projectId: input.projectId,
+      title: exportDocument.name || '成片',
+      assetId: rendered.id,
+      publicUrl: rendered.publicUrl,
+    }).catch(() => undefined);
     const storage = describeLocalStorage();
     return {
       ok: true as const,
@@ -188,6 +195,8 @@ export async function recordEpisodeRender(input: {
   projectId: string
   assetId: string
   publicUrl: string
+  title?: string
+  shotIds?: string[]
 }) {
   const loaded = await loadProjectTimeline(input.projectId);
   if (!loaded) return { ok: false as const, message: '还没有时间线。' };
@@ -211,5 +220,12 @@ export async function recordEpisodeRender(input: {
     if (!persisted.ok) throw new Error(persisted.message);
     return { document: persisted.data.timeline, version: persisted.revision };
   });
+  await recordDramaExport({
+    projectId: input.projectId,
+    title: input.title || '成片',
+    assetId: input.assetId,
+    publicUrl: input.publicUrl,
+    shotIds: input.shotIds,
+  }).catch(() => undefined);
   return { ok: true as const, version: saved?.version };
 }
