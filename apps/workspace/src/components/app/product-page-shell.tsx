@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Images, LayoutPanelTop, Scissors, Workflow } from 'lucide-react';
+import { Clapperboard, Images, LayoutPanelTop, Scissors, Settings, Workflow } from 'lucide-react';
 
-import { WorkspaceApiConfigDialog } from '@/components/app/workspace-api-config-dialog';
 import { ProjectSettingsDialog } from './project-settings-dialog';
 import { fetchProjectSettings, saveProjectSettings } from '@/core/workspace-lib/app/project-settings-client';
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +12,6 @@ import { Link } from '@/core/i18n/navigation';
 import { useTranslations } from '@/core/workspace-lib/shims/next-intl';
 import { ApiError, apiJsonPost } from '@/lib/api-client';
 import { appConfig } from '@/config';
-import { ACTIVE_GENERATION_PROVIDER_ID } from '@/config/generation-providers';
 import type { WorkspaceMode } from '@/config/workspace-modes';
 
 export function ProductPageShell({
@@ -197,6 +195,14 @@ export function ProductPageShell({
                     <Images className="size-3.5" aria-hidden="true" />
                     <span className="hidden sm:inline">{t('header.assets')}</span>
                   </Link>
+                  <Link
+                    href={`/drama/${projectId}`}
+                    aria-label="短剧"
+                    className={workspaceTabClassName(false)}
+                  >
+                    <Clapperboard className="size-3.5" aria-hidden="true" />
+                    <span className="hidden sm:inline">短剧</span>
+                  </Link>
                 </nav>
               ) : null}
               <LanguageSwitcher variant="workspace" />
@@ -205,11 +211,16 @@ export function ProductPageShell({
                 lastPersistedWorkspaceNameRef.current = settings.name;
                 void projectSettings.refetch();
               }} />}
-              <WorkspaceApiConfigDialog
-                providerId={ACTIVE_GENERATION_PROVIDER_ID}
-              />
+              <Link
+                href="/settings"
+                aria-label="设置"
+                title="设置"
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.09] bg-white/[0.035] text-[var(--beat-text-2)] transition hover:border-white/[0.16] hover:bg-white/[0.075] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--beat-graph)]/70"
+              >
+                <Settings className="size-[17px]" aria-hidden="true" />
+              </Link>
               <a
-                href="https://github.com/BeatAPI/BeatDesign"
+                href="https://github.com/openroute-ai/vercelai-kaijing"
                 target="_blank"
                 rel="noreferrer"
                 aria-label={t('header.githubRepository')}

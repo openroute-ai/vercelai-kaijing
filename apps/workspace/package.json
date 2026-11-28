@@ -4,13 +4,13 @@
   "private": true,
   "description": "开镜本机工作台。画布、编辑器与本机运行时来自 Apache-2.0 上游，见 UPSTREAM.md。",
   "license": "Apache-2.0",
-  "homepage": "https://beatapi.io/design",
+  "homepage": "https://vercelai.cn",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BeatAPI/BeatDesign.git"
+    "url": "git+https://github.com/openroute-ai/vercelai-kaijing.git"
   },
   "bugs": {
-    "url": "https://github.com/BeatAPI/BeatDesign/issues"
+    "url": "https://github.com/openroute-ai/vercelai-kaijing/issues"
   },
   "engines": {
     "node": ">=22",

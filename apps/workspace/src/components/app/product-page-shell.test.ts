@@ -17,7 +17,7 @@ const apiConfigSource = readFileSync(
 );
 
 test('workspace header keeps mode switching, shared assets, and API configuration actions', () => {
-  assert.match(shellSource, /WorkspaceApiConfigDialog/);
+  assert.match(shellSource, /href="\/settings"/);
   assert.match(shellSource, /\/assets\//);
   assert.match(shellSource, /header\.studio/);
   assert.match(shellSource, /header\.canvas/);
@@ -36,7 +36,7 @@ test('workspace header keeps mode switching, shared assets, and API configuratio
   assert.match(shellSource, /GitHubIcon/);
   assert.match(
     shellSource,
-    /https:\/\/github\.com\/BeatAPI\/BeatDesign/
+    /https:\/\/github\.com\/openroute-ai\/vercelai-kaijing/
   );
   assert.match(shellSource, /target="_blank"/);
   assert.match(shellSource, /rel="noreferrer"/);
@@ -54,7 +54,8 @@ test('API configuration presets the BeatAPI endpoint and saves key + host', () =
   assert.match(apiConfigSource, /'beatapi' \| 's3'/);
   assert.match(apiConfigSource, /apiGet<StorageConfigState>\('\/api\/config\/storage'\)/);
   assert.match(apiConfigSource, /apiPost\('\/api\/config\/storage'/);
-  assert.match(apiConfigSource, /https:\/\/beatapi\.io\/dashboard\/apikeys/);
+  assert.doesNotMatch(apiConfigSource, /https:\/\/beatapi\.io\/dashboard\/apikeys/);
+  assert.match(apiConfigSource, /\{t\('getKey'\)\}/);
   assert.doesNotMatch(apiConfigSource, /apiJson(?:Get|Post).*\/api\/config\/storage/);
 });
 

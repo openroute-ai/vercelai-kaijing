@@ -107,7 +107,32 @@ export const generationJobs = pgTable(
   ],
 )
 
+
+/** 充值下单占位。支付通道开通前只记录意向，不真正收款。 */
+export const checkoutIntentStatuses = ["pending", "placeholder"] as const
+export type CheckoutIntentStatus = (typeof checkoutIntentStatuses)[number]
+
+export const checkoutIntents = pgTable(
+  "checkout_intents",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    planId: varchar("plan_id", { length: 64 }).notNull(),
+    credits: numeric("credits", { precision: 15, scale: 4 }).notNull(),
+    priceLabel: text("price_label").notNull(),
+    status: varchar("status", { length: 32 }).notNull().default("placeholder"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (table) => [index("checkout_intents_user_id_idx").on(table.userId)],
+)
+
 export type CreditAccount = typeof creditAccounts.$inferSelect
 export type CreditLedgerEntry = typeof creditLedger.$inferSelect
 export type GenerationJob = typeof generationJobs.$inferSelect
 export type NewGenerationJob = typeof generationJobs.$inferInsert
+export type CheckoutIntent = typeof checkoutIntents.$inferSelect

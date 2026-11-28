@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { ProjectPackageBar } from '@/components/kaijing/project-package-bar';
 import { BeatApiProductShell } from '@/components/marketing/beatapi-product-shell';
 import { normalizeLocale } from '@/config/locale';
 import { ProjectSettingsDialog } from '@/components/app/project-settings-dialog';
@@ -245,6 +246,12 @@ export function WorkspacePage({
             <p className="mt-4 max-w-2xl text-pretty text-[14px] font-normal leading-6 text-[var(--beat-text-2)] sm:text-[15px]">
               {copy.subtitle}
             </p>
+            <p className="mt-3 max-w-2xl text-[13px] leading-6 text-white/55">
+              项目默认保存在这台电脑上，可导出项目包拷给别人继续改。云端备份尚未开通。
+            </p>
+            <div className="mt-4">
+              <ProjectPackageBar />
+            </div>
           </div>
 
           <button
@@ -285,7 +292,14 @@ export function WorkspacePage({
                     </Link>
 
                     <div className="absolute left-3 top-3 rounded-xl bg-black/70 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100 max-sm:opacity-100"><ProjectSettingsDialog projectId={project.id} /></div>
-
+                    <div className="mt-2 px-1">
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <Link href={`/drama/${project.id}`} className="text-white/70 hover:text-white">
+                          短剧
+                        </Link>
+                        <ProjectPackageBar projectId={project.id} mode="export" />
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={() => void removeProject(project)}

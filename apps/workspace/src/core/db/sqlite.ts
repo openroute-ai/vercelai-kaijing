@@ -34,6 +34,16 @@ export async function configureLocalSqlite(
         statements.push("CREATE TABLE IF NOT EXISTS project_organization_state (project_id TEXT PRIMARY KEY NOT NULL REFERENCES project(id) ON DELETE CASCADE, schema_version INTEGER NOT NULL DEFAULT 1, document_json TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, updated_at INTEGER NOT NULL DEFAULT (cast((julianday('now')-2440587.5)*86400000 as integer)))");
         statements.push("CREATE TABLE IF NOT EXISTS workflow_template (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, schema_version INTEGER NOT NULL DEFAULT 1, definition_json TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL DEFAULT (cast((julianday('now')-2440587.5)*86400000 as integer)), updated_at INTEGER NOT NULL DEFAULT (cast((julianday('now')-2440587.5)*86400000 as integer)))");
         statements.push(...dramaTableStatements);
+        const dramaProjectColumns = await client.execute('PRAGMA table_info(drama_projects)');
+        const dramaProjectNames = new Set(dramaProjectColumns.rows.map((row) => String(row.name)));
+        if (dramaProjectNames.size) {
+          if (!dramaProjectNames.has('aspect_ratio')) {
+            statements.push("ALTER TABLE drama_projects ADD COLUMN aspect_ratio TEXT NOT NULL DEFAULT '9:16'");
+          }
+          if (!dramaProjectNames.has('cloud_backup_status')) {
+            statements.push("ALTER TABLE drama_projects ADD COLUMN cloud_backup_status TEXT NOT NULL DEFAULT 'local'");
+          }
+        }
         for (const [table, fields] of [
           ['project_command_receipt', ['request_hash']],
           ['generation_upload_intent', ['source_card_id', 'source_context_digest']],

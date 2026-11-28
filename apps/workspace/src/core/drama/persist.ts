@@ -28,8 +28,21 @@ export type DramaDraftShot = {
   status: string;
 };
 
+export const DRAMA_ASPECT_RATIOS = ['9:16', '16:9'] as const;
+export type DramaAspectRatio = (typeof DRAMA_ASPECT_RATIOS)[number];
+
+export function isDramaAspectRatio(value: unknown): value is DramaAspectRatio {
+  return value === '9:16' || value === '16:9';
+}
+
 export type DramaDraft = {
   projectId: string;
+  settings: {
+    quality: string;
+    aspectRatio: DramaAspectRatio;
+    aspectRatioLocked: boolean;
+    cloudBackupStatus: string;
+  };
   script: {
     id: string;
     title: string;
@@ -48,6 +61,8 @@ export type DramaDraft = {
 export type DramaDraftInput = {
   script: unknown;
   storyboard: unknown;
+  quality?: unknown;
+  aspectRatio?: unknown;
 };
 
 export type SaveDramaDraftResult =
@@ -99,8 +114,18 @@ async function readDraft(db: Database, projectId: string): Promise<DramaDraft | 
         .orderBy(asc(dramaShots.index))
     : [];
 
+  const aspectRatio = isDramaAspectRatio(pointer?.aspectRatio)
+    ? pointer.aspectRatio
+    : '9:16';
+
   return {
     projectId,
+    settings: {
+      quality: pointer?.quality || 'standard',
+      aspectRatio,
+      aspectRatioLocked: Boolean(pointer),
+      cloudBackupStatus: pointer?.cloudBackupStatus || 'local',
+    },
     script: scriptRow
       ? {
           id: scriptRow.id,
@@ -247,12 +272,24 @@ export async function saveDramaDraft(
       );
     }
 
+    const quality =
+      input.quality === 'fast' || input.quality === 'standard'
+        ? input.quality
+        : pointers[0]?.quality || 'standard';
+    const requestedRatio = isDramaAspectRatio(input.aspectRatio)
+      ? input.aspectRatio
+      : null;
+
     if (pointers[0]) {
+      if (requestedRatio && requestedRatio !== (isDramaAspectRatio(pointers[0].aspectRatio) ? pointers[0].aspectRatio : '9:16')) {
+        return { ok: false, status: 400, issues: ['画面比例在创建后不能再改。'] };
+      }
       await db
         .update(dramaProjects)
         .set({
           currentScriptId: scriptId,
           currentStoryboardId: storyboardId,
+          quality,
           updatedAt: now,
         })
         .where(eq(dramaProjects.projectId, projectId));
@@ -261,7 +298,74 @@ export async function saveDramaDraft(
         projectId,
         currentScriptId: scriptId,
         currentStoryboardId: storyboardId,
-        quality: 'standard',
+        quality,
+        aspectRatio: requestedRatio ?? '9:16',
+        cloudBackupStatus: 'local',
+        updatedAt: now,
+      });
+    }
+
+    const draft = await readDraft(db, projectId);
+    if (!draft) return { ok: false, status: 404, issues: ['找不到项目'] };
+    return { ok: true, draft };
+  });
+}
+
+
+export async function ensureDramaSettings(
+  projectId: string,
+  input: { quality?: unknown; aspectRatio?: unknown; cloudBackupStatus?: unknown }
+): Promise<SaveDramaDraftResult> {
+  return withDatabaseTransaction(async () => {
+    const db = await getDb();
+    const existing = await db
+      .select({ id: project.id })
+      .from(project)
+      .where(eq(project.id, projectId))
+      .limit(1);
+    if (!existing[0]) return { ok: false, status: 404, issues: ['找不到项目'] };
+
+    const pointers = await db
+      .select()
+      .from(dramaProjects)
+      .where(eq(dramaProjects.projectId, projectId))
+      .limit(1);
+    const quality =
+      input.quality === 'fast' || input.quality === 'standard'
+        ? input.quality
+        : pointers[0]?.quality || 'standard';
+    const requestedRatio = isDramaAspectRatio(input.aspectRatio)
+      ? input.aspectRatio
+      : null;
+    const backup =
+      input.cloudBackupStatus === 'queued' ||
+      input.cloudBackupStatus === 'local' ||
+      input.cloudBackupStatus === 'export_only'
+        ? input.cloudBackupStatus
+        : undefined;
+    const now = new Date();
+
+    if (pointers[0]) {
+      const currentRatio = isDramaAspectRatio(pointers[0].aspectRatio)
+        ? pointers[0].aspectRatio
+        : '9:16';
+      if (requestedRatio && requestedRatio !== currentRatio) {
+        return { ok: false, status: 400, issues: ['画面比例在创建后不能再改。'] };
+      }
+      await db
+        .update(dramaProjects)
+        .set({
+          quality,
+          ...(backup ? { cloudBackupStatus: backup } : {}),
+          updatedAt: now,
+        })
+        .where(eq(dramaProjects.projectId, projectId));
+    } else {
+      await db.insert(dramaProjects).values({
+        projectId,
+        quality,
+        aspectRatio: requestedRatio ?? '9:16',
+        cloudBackupStatus: backup ?? 'local',
         updatedAt: now,
       });
     }

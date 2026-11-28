@@ -19,6 +19,8 @@ export const dramaTableStatements = [
     current_script_id TEXT,
     current_storyboard_id TEXT,
     quality TEXT NOT NULL DEFAULT 'standard',
+    aspect_ratio TEXT NOT NULL DEFAULT '9:16',
+    cloud_backup_status TEXT NOT NULL DEFAULT 'local',
     updated_at INTEGER NOT NULL DEFAULT ${now}
   )`,
   `CREATE TABLE IF NOT EXISTS drama_characters (

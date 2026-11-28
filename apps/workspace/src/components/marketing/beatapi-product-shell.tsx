@@ -5,12 +5,14 @@ import {
 import { useState, type ReactNode } from 'react';
 
 import { LanguageSwitcher } from '@/components/app/language-switcher';
+import { KaijingAccountChip } from '@/components/kaijing/account-chip';
+import { KaijingAppGate } from '@/components/kaijing/app-gate';
 import { normalizeLocale } from '@/config/locale';
 import { Link } from '@/core/i18n/navigation';
 import { appConfig } from '@/config';
 import { m } from '@/paraglide/messages.js';
 
-type ProductSurface = 'home' | 'projects';
+type ProductSurface = 'home' | 'projects' | 'drama' | 'account' | 'settings';
 
 function getShellCopy(locale: string) {
   const messageLocale = normalizeLocale(locale);
@@ -40,16 +42,19 @@ type ShellCopy = ReturnType<typeof getShellCopy>;
 function getNavItems(copy: ShellCopy) {
   return [
     { label: copy.home, href: '/' },
-    { label: copy.create, href: '/studio' },
     { label: copy.projects, href: '/projects' },
-    { label: '云端账户', href: '/cloud-account' },
     { label: '短剧', href: '/drama' },
+    { label: '云端账户', href: '/cloud-account' },
+    { label: '设置', href: '/settings' },
   ] as const;
 }
 
 const activeNavHref: Record<ProductSurface, string> = {
   home: '/',
   projects: '/projects',
+  drama: '/drama',
+  account: '/cloud-account',
+  settings: '/settings',
 };
 
 export function Brand({ href = '/' }: { href?: string }) {
@@ -125,6 +130,7 @@ export function BeatApiProductShell({
           <CapsuleNav active={active} items={navItems} />
 
           <div className="ml-auto flex items-center gap-2">
+            <KaijingAccountChip />
             <div className="hidden md:block">
               <LanguageSwitcher />
             </div>
@@ -165,10 +171,14 @@ export function BeatApiProductShell({
         ) : null}
       </header>
 
-      {children}
+      <KaijingAppGate>{children}</KaijingAppGate>
 
       <footer className="px-5 pb-8 pt-16 text-center text-[11px] font-[500] text-[#626269]">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <span>开镜 Kaijing</span>
+          <a href="https://vercelai.cn" className="transition hover:text-[#b6b6bb]">
+            vercelai.cn
+          </a>
           <Link href="/terms-of-service" className="transition hover:text-[#b6b6bb]">
             {copy.terms}
           </Link>

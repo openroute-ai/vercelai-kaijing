@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "开镜 Electron 壳。开发时加载本机工作台（默认 http://127.0.0.1:5173）。",
+  "description": "开镜 Electron 壳。开发时加载本机工作台（默认 http://127.0.0.1:3020）。",
   "main": "main.cjs",
   "scripts": {
     "dev": "electron .",

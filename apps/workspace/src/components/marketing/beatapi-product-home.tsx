@@ -1,185 +1,120 @@
-import {
-  ArrowRight,
-  ArrowUp,
-  FolderClock,
-  PanelsTopLeft,
-  Workflow,
-} from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { ArrowRight, Clapperboard, PanelsTopLeft, Workflow } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { Link } from '@/core/i18n/navigation';
-import { normalizeLocale } from '@/config/locale';
-import { m } from '@/paraglide/messages.js';
 import { BeatApiProductShell } from './beatapi-product-shell';
-
-function getCopy(locale: string) {
-  const messageLocale = normalizeLocale(locale);
-  return {
-    eyebrow: m['product.home.eyebrow']({}, { locale: messageLocale }),
-    titleLine1: m['product.home.titleLine1']({}, { locale: messageLocale }),
-    titleLine2: m['product.home.titleLine2']({}, { locale: messageLocale }),
-    prompt: m['product.home.prompt']({}, { locale: messageLocale }),
-    sectionTitle: m['product.home.sectionTitle']({}, { locale: messageLocale }),
-    projects: m['product.home.viewProjects']({}, { locale: messageLocale }),
-    studio: m['product.shell.studio']({}, { locale: messageLocale }),
-    canvas: m['product.shell.canvas']({}, { locale: messageLocale }),
-    studioDescription: m['product.home.studioDescription'](
-      {},
-      { locale: messageLocale }
-    ),
-    canvasDescription: m['product.home.canvasDescription'](
-      {},
-      { locale: messageLocale }
-    ),
-    projectsTitle: m['product.home.projectsTitle'](
-      {},
-      { locale: messageLocale }
-    ),
-    projectsDescription: m['product.home.projectsDescription'](
-      {},
-      { locale: messageLocale }
-    ),
-    open: m['product.home.openWorkspace']({}, { locale: messageLocale }),
-    create: m['product.shell.create']({}, { locale: messageLocale }),
-  };
-}
-
-type HomeCopy = ReturnType<typeof getCopy>;
-
-function WorkspaceCard({
-  title,
-  index,
-  description,
-  href,
-  icon,
-  openLabel,
-}: {
-  title: string;
-  index: string;
-  description: string;
-  href: string;
-  icon: ReactNode;
-  openLabel: string;
-}) {
-  return (
-    <Link href={href} className="group block h-full">
-      <article className="relative flex h-full min-h-[212px] flex-col overflow-hidden rounded-[var(--beat-radius)] border border-white/[0.07] bg-white/[0.025] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[0.16] hover:bg-white/[0.045]">
-        <div className="flex items-start justify-between">
-          <span className="grid size-10 place-items-center rounded-[var(--beat-radius-sm)] border border-white/[0.06] bg-[#111113] text-[var(--beat-accent)] transition-shadow duration-300 group-hover:shadow-[0_0_28px_rgba(255,122,51,0.2)]">
-            {icon}
-          </span>
-          <span className="beat-product-display text-[11px] font-semibold tracking-[0.14em] text-white/25">
-            {index}
-          </span>
-        </div>
-        <h3 className="beat-product-display mt-6 text-[17px] font-semibold tracking-[-0.02em] text-[var(--beat-text-1)]">
-          {title}
-        </h3>
-        <p className="mt-2 text-[13px] leading-[1.65] text-[var(--beat-text-2)]">
-          {description}
-        </p>
-        <span className="mt-auto inline-flex items-center gap-2 pt-6 text-[12.5px] font-medium text-white/65 transition-colors group-hover:text-white">
-          {openLabel}
-          <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-        </span>
-      </article>
-    </Link>
-  );
-}
-
-function PromptComposer({ copy }: { copy: HomeCopy }) {
-  const [prompt, setPrompt] = useState('');
-
-  return (
-    <form
-      action="/studio"
-      method="get"
-      className="mx-auto mt-10 flex min-h-[160px] w-full max-w-[720px] flex-col rounded-[var(--beat-radius)] border border-white/[0.13] bg-[linear-gradient(145deg,#1b1b1e_0%,#151517_100%)] p-5 text-left shadow-[0_30px_100px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.035)] sm:p-6"
-    >
-      <textarea
-        name="prompt"
-        value={prompt}
-        onChange={(event) => setPrompt(event.target.value)}
-        placeholder={copy.prompt}
-        aria-label={copy.prompt}
-        className="min-h-16 w-full resize-none border-0 bg-transparent text-[15px] leading-6 text-white outline-none placeholder:text-[var(--beat-text-3)] sm:text-base"
-      />
-      <div className="mt-auto flex items-end justify-end">
-        <button
-          type="submit"
-          aria-label={copy.create}
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--beat-accent)] text-[var(--beat-accent-ink)] shadow-[0_8px_24px_rgba(255,122,51,0.3)] transition hover:scale-[1.04] hover:bg-[#ff8a4d]"
-        >
-          <ArrowUp className="size-4" />
-        </button>
-      </div>
-    </form>
-  );
-}
+import { Link } from '@/core/i18n/navigation';
+import {
+  getEntryPath,
+  rememberEntryPath,
+  type KaijingEntryPath,
+} from '@/lib/kaijing-preferences';
 
 export function BeatApiProductHome({ locale }: { locale: string }) {
-  const copy = getCopy(locale);
-  const titleLines = [copy.titleLine1, copy.titleLine2];
+  const [path, setPath] = useState<KaijingEntryPath | null>(null);
+  useEffect(() => setPath(getEntryPath()), []);
+
+  function switchPath(next: KaijingEntryPath) {
+    rememberEntryPath(next);
+    setPath(next);
+  }
 
   return (
     <BeatApiProductShell active="home" locale={locale}>
-      <main className="mx-auto w-full max-w-[1280px] px-5 sm:px-6">
-        <section className="beat-product-hero pb-14 pt-[64px] text-center sm:pt-[84px] lg:pb-[72px]">
+      <main className="mx-auto w-full max-w-[1280px] px-5 pb-16 sm:px-6">
+        <section className="beat-product-hero pb-10 pt-[64px] text-center sm:pt-[84px]">
           <p className="beat-product-display inline-flex items-center gap-2.5 text-[10px] font-semibold tracking-[0.18em] text-[var(--beat-accent)] sm:text-[11px]">
             <span className="size-1.5 rounded-full bg-[var(--beat-accent)]" />
-            {copy.eyebrow}
+            开镜 Kaijing · vercelai.cn
           </p>
-          <h1 className="beat-product-display beat-product-hero-title mx-auto mt-6 w-full max-w-[720px] text-[clamp(2.25rem,6.6vw,4.75rem)] font-semibold leading-[1.04] tracking-[-0.04em] text-[#f7f7f8]">
-            {titleLines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
+          <h1 className="beat-product-display beat-product-hero-title mx-auto mt-6 w-full max-w-[760px] text-[clamp(2.25rem,6.6vw,4.5rem)] font-semibold leading-[1.04] tracking-[-0.04em] text-[#f7f7f8]">
+            {path === 'media' ? (
+              <>
+                <span className="block">先出一张图，</span>
+                <span className="block">或一段视频。</span>
+              </>
+            ) : (
+              <>
+                <span className="block">用一句话，</span>
+                <span className="block">做完一集短剧。</span>
+              </>
+            )}
           </h1>
-          <PromptComposer copy={copy} />
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-white/65">
+            项目默认保存在这台电脑上，可以导出项目包拷给别人继续改。生成走平台网关，不用先填密钥。
+          </p>
         </section>
 
-        <section className="pb-14">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="beat-product-display text-xl font-semibold tracking-[-0.03em] text-[var(--beat-text-1)] sm:text-[22px]">
-              {copy.sectionTitle}
-            </h2>
+        {path !== 'media' ? (
+          <section className="mx-auto max-w-[720px] rounded-[28px] border border-[var(--beat-accent)]/30 bg-[var(--beat-accent)]/8 p-6 text-left sm:p-8">
+            <p className="text-xs font-semibold tracking-[0.16em] text-[var(--beat-accent)]">
+              短剧主路径
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold">用一句话做一集</h2>
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              写下想法或粘贴小说，保存剧本和分镜，再按步骤做一集。自动导演还在接通中，不会假装已经出片。
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/drama"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-[var(--beat-accent)] px-5 text-sm font-semibold text-[var(--beat-accent-ink)]"
+              >
+                <Clapperboard className="size-4" />
+                用一句话做一集
+              </Link>
+              <Link
+                href="/projects"
+                className="inline-flex h-11 items-center rounded-full border border-white/15 px-5 text-sm text-white/80"
+              >
+                打开已有项目
+              </Link>
+            </div>
+          </section>
+        ) : (
+          <section className="mx-auto grid max-w-[720px] gap-4 md:grid-cols-2">
             <Link
-              href="/projects"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--beat-text-2)] transition hover:text-white"
-            >
-              {copy.projects}
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <WorkspaceCard
-              title={copy.studio}
-              index="01"
-              description={copy.studioDescription}
               href="/studio"
-              icon={<PanelsTopLeft className="size-5" />}
-              openLabel={copy.open}
-            />
-            <WorkspaceCard
-              title={copy.canvas}
-              index="02"
-              description={copy.canvasDescription}
+              className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/25"
+            >
+              <PanelsTopLeft className="size-5 text-[var(--beat-accent)]" />
+              <h2 className="mt-4 text-xl font-semibold">进入创作台</h2>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                单独生成一张图或一段视频。默认使用平台网关；自有密钥在高级设置里。
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1 text-sm text-white/70">
+                打开创作台 <ArrowRight className="size-3.5" />
+              </span>
+            </Link>
+            <Link
               href="/canvas"
-              icon={<Workflow className="size-5" />}
-              openLabel={copy.open}
-            />
-            <WorkspaceCard
-              title={copy.projectsTitle}
-              index="03"
-              description={copy.projectsDescription}
-              href="/projects"
-              icon={<FolderClock className="size-5" />}
-              openLabel={copy.open}
-            />
-          </div>
-        </section>
+              className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/25"
+            >
+              <Workflow className="size-5 text-[var(--beat-accent)]" />
+              <h2 className="mt-4 text-xl font-semibold">进入画布</h2>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                把素材摆在无限画布上，连线对照。适合打磨，而不是做完整一集。
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1 text-sm text-white/70">
+                打开画布 <ArrowRight className="size-3.5" />
+              </span>
+            </Link>
+          </section>
+        )}
+
+        <p className="mt-8 text-center text-sm text-white/45">
+          {path === 'media' ? (
+            <button type="button" className="underline-offset-2 hover:underline" onClick={() => switchPath('drama')}>
+              还是想做短剧？回到「用一句话做一集」
+            </button>
+          ) : (
+            <button type="button" className="underline-offset-2 hover:underline" onClick={() => switchPath('media')}>
+              我只想生成一张图 / 一段视频
+            </button>
+          )}
+        </p>
+
+        <p className="mt-6 text-center text-xs text-white/40">
+          登录后才能生成。写剧本和查看项目不强制登录。
+        </p>
       </main>
     </BeatApiProductShell>
   );

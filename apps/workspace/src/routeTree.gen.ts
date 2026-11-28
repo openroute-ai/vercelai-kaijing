@@ -16,6 +16,7 @@ import { Route as CanvasRouteRouteImport } from './routes/canvas/route'
 import { Route as CloudAccountRouteImport } from './routes/cloud-account'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteRouteImport } from './routes/studio/route'
 import { Route as pagesPrivacyPolicyRouteImport } from './routes/(pages)/privacy-policy'
@@ -41,6 +42,7 @@ import { Route as ApiStorageUploadRouteImport } from './routes/api/storage/uploa
 import { Route as ApiAppEffectsModelsRouteImport } from './routes/api/app/effects/models'
 import { Route as ApiAppProjectsIndexRouteImport } from './routes/api/app/projects/index'
 import { Route as ApiAppProjectsProjectIdRouteImport } from './routes/api/app/projects/$projectId'
+import { Route as ApiAppProjectsImportRouteImport } from './routes/api/app/projects/import'
 import { Route as ApiAppWorkflowTemplatesIndexRouteImport } from './routes/api/app/workflow-templates/index'
 import { Route as ApiAppWorkflowTemplatesTemplateIdRouteImport } from './routes/api/app/workflow-templates/$templateId'
 import { Route as ApiAppProjectsProjectIdCommandsRouteImport } from './routes/api/app/projects/$projectId/commands'
@@ -49,6 +51,7 @@ import { Route as ApiAppProjectsProjectIdGenerationsRouteImport } from './routes
 import { Route as ApiAppProjectsProjectIdOrganizationRouteImport } from './routes/api/app/projects/$projectId/organization'
 import { Route as ApiAppProjectsProjectIdOrganizationAssetsRouteImport } from './routes/api/app/projects/$projectId/organization-assets'
 import { Route as ApiAppProjectsProjectIdOrganizationPreviewRouteImport } from './routes/api/app/projects/$projectId/organization-preview'
+import { Route as ApiAppProjectsProjectIdPackageRouteImport } from './routes/api/app/projects/$projectId/package'
 import { Route as ApiAppProjectsProjectIdRevisionRouteImport } from './routes/api/app/projects/$projectId/revision'
 import { Route as ApiAppProjectsProjectIdSnapshotRouteImport } from './routes/api/app/projects/$projectId/snapshot'
 import { Route as ApiAppProjectsProjectIdTemplatePreviewRouteImport } from './routes/api/app/projects/$projectId/template-preview'
@@ -90,6 +93,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -217,6 +225,11 @@ const ApiAppProjectsProjectIdRoute = ApiAppProjectsProjectIdRouteImport.update({
   path: '/api/app/projects/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAppProjectsImportRoute = ApiAppProjectsImportRouteImport.update({
+  id: '/api/app/projects/import',
+  path: '/api/app/projects/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAppWorkflowTemplatesIndexRoute =
   ApiAppWorkflowTemplatesIndexRouteImport.update({
     id: '/api/app/workflow-templates/',
@@ -263,6 +276,12 @@ const ApiAppProjectsProjectIdOrganizationPreviewRoute =
   ApiAppProjectsProjectIdOrganizationPreviewRouteImport.update({
     id: '/organization-preview',
     path: '/organization-preview',
+    getParentRoute: () => ApiAppProjectsProjectIdRoute,
+  } as any)
+const ApiAppProjectsProjectIdPackageRoute =
+  ApiAppProjectsProjectIdPackageRouteImport.update({
+    id: '/package',
+    path: '/package',
     getParentRoute: () => ApiAppProjectsProjectIdRoute,
   } as any)
 const ApiAppProjectsProjectIdRevisionRoute =
@@ -322,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/cloud-account': typeof CloudAccountRoute
   '/projects': typeof ProjectsRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/privacy-policy': typeof pagesPrivacyPolicyRoute
   '/terms-of-service': typeof pagesTermsOfServiceRoute
@@ -345,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/api/app/effects/models': typeof ApiAppEffectsModelsRoute
   '/api/app/projects/$projectId': typeof ApiAppProjectsProjectIdRouteWithChildren
+  '/api/app/projects/import': typeof ApiAppProjectsImportRoute
   '/api/app/workflow-templates/$templateId': typeof ApiAppWorkflowTemplatesTemplateIdRoute
   '/api/app/projects/': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates/': typeof ApiAppWorkflowTemplatesIndexRoute
@@ -354,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
   '/api/app/projects/$projectId/organization-preview': typeof ApiAppProjectsProjectIdOrganizationPreviewRoute
+  '/api/app/projects/$projectId/package': typeof ApiAppProjectsProjectIdPackageRoute
   '/api/app/projects/$projectId/revision': typeof ApiAppProjectsProjectIdRevisionRoute
   '/api/app/projects/$projectId/snapshot': typeof ApiAppProjectsProjectIdSnapshotRoute
   '/api/app/projects/$projectId/template-preview': typeof ApiAppProjectsProjectIdTemplatePreviewRoute
@@ -369,6 +391,7 @@ export interface FileRoutesByTo {
   '/cloud-account': typeof CloudAccountRoute
   '/projects': typeof ProjectsRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/privacy-policy': typeof pagesPrivacyPolicyRoute
   '/terms-of-service': typeof pagesTermsOfServiceRoute
@@ -392,6 +415,7 @@ export interface FileRoutesByTo {
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/api/app/effects/models': typeof ApiAppEffectsModelsRoute
   '/api/app/projects/$projectId': typeof ApiAppProjectsProjectIdRouteWithChildren
+  '/api/app/projects/import': typeof ApiAppProjectsImportRoute
   '/api/app/workflow-templates/$templateId': typeof ApiAppWorkflowTemplatesTemplateIdRoute
   '/api/app/projects': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates': typeof ApiAppWorkflowTemplatesIndexRoute
@@ -401,6 +425,7 @@ export interface FileRoutesByTo {
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
   '/api/app/projects/$projectId/organization-preview': typeof ApiAppProjectsProjectIdOrganizationPreviewRoute
+  '/api/app/projects/$projectId/package': typeof ApiAppProjectsProjectIdPackageRoute
   '/api/app/projects/$projectId/revision': typeof ApiAppProjectsProjectIdRevisionRoute
   '/api/app/projects/$projectId/snapshot': typeof ApiAppProjectsProjectIdSnapshotRoute
   '/api/app/projects/$projectId/template-preview': typeof ApiAppProjectsProjectIdTemplatePreviewRoute
@@ -420,6 +445,7 @@ export interface FileRoutesById {
   '/cloud-account': typeof CloudAccountRoute
   '/projects': typeof ProjectsRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/(pages)/privacy-policy': typeof pagesPrivacyPolicyRoute
   '/(pages)/terms-of-service': typeof pagesTermsOfServiceRoute
@@ -443,6 +469,7 @@ export interface FileRoutesById {
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/api/app/effects/models': typeof ApiAppEffectsModelsRoute
   '/api/app/projects/$projectId': typeof ApiAppProjectsProjectIdRouteWithChildren
+  '/api/app/projects/import': typeof ApiAppProjectsImportRoute
   '/api/app/workflow-templates/$templateId': typeof ApiAppWorkflowTemplatesTemplateIdRoute
   '/api/app/projects/': typeof ApiAppProjectsIndexRoute
   '/api/app/workflow-templates/': typeof ApiAppWorkflowTemplatesIndexRoute
@@ -452,6 +479,7 @@ export interface FileRoutesById {
   '/api/app/projects/$projectId/organization': typeof ApiAppProjectsProjectIdOrganizationRoute
   '/api/app/projects/$projectId/organization-assets': typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
   '/api/app/projects/$projectId/organization-preview': typeof ApiAppProjectsProjectIdOrganizationPreviewRoute
+  '/api/app/projects/$projectId/package': typeof ApiAppProjectsProjectIdPackageRoute
   '/api/app/projects/$projectId/revision': typeof ApiAppProjectsProjectIdRevisionRoute
   '/api/app/projects/$projectId/snapshot': typeof ApiAppProjectsProjectIdSnapshotRoute
   '/api/app/projects/$projectId/template-preview': typeof ApiAppProjectsProjectIdTemplatePreviewRoute
@@ -471,6 +499,7 @@ export interface FileRouteTypes {
     | '/cloud-account'
     | '/projects'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap.xml'
     | '/privacy-policy'
     | '/terms-of-service'
@@ -494,6 +523,7 @@ export interface FileRouteTypes {
     | '/api/storage/upload'
     | '/api/app/effects/models'
     | '/api/app/projects/$projectId'
+    | '/api/app/projects/import'
     | '/api/app/workflow-templates/$templateId'
     | '/api/app/projects/'
     | '/api/app/workflow-templates/'
@@ -503,6 +533,7 @@ export interface FileRouteTypes {
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
     | '/api/app/projects/$projectId/organization-preview'
+    | '/api/app/projects/$projectId/package'
     | '/api/app/projects/$projectId/revision'
     | '/api/app/projects/$projectId/snapshot'
     | '/api/app/projects/$projectId/template-preview'
@@ -518,6 +549,7 @@ export interface FileRouteTypes {
     | '/cloud-account'
     | '/projects'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap.xml'
     | '/privacy-policy'
     | '/terms-of-service'
@@ -541,6 +573,7 @@ export interface FileRouteTypes {
     | '/api/storage/upload'
     | '/api/app/effects/models'
     | '/api/app/projects/$projectId'
+    | '/api/app/projects/import'
     | '/api/app/workflow-templates/$templateId'
     | '/api/app/projects'
     | '/api/app/workflow-templates'
@@ -550,6 +583,7 @@ export interface FileRouteTypes {
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
     | '/api/app/projects/$projectId/organization-preview'
+    | '/api/app/projects/$projectId/package'
     | '/api/app/projects/$projectId/revision'
     | '/api/app/projects/$projectId/snapshot'
     | '/api/app/projects/$projectId/template-preview'
@@ -568,6 +602,7 @@ export interface FileRouteTypes {
     | '/cloud-account'
     | '/projects'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap.xml'
     | '/(pages)/privacy-policy'
     | '/(pages)/terms-of-service'
@@ -591,6 +626,7 @@ export interface FileRouteTypes {
     | '/api/storage/upload'
     | '/api/app/effects/models'
     | '/api/app/projects/$projectId'
+    | '/api/app/projects/import'
     | '/api/app/workflow-templates/$templateId'
     | '/api/app/projects/'
     | '/api/app/workflow-templates/'
@@ -600,6 +636,7 @@ export interface FileRouteTypes {
     | '/api/app/projects/$projectId/organization'
     | '/api/app/projects/$projectId/organization-assets'
     | '/api/app/projects/$projectId/organization-preview'
+    | '/api/app/projects/$projectId/package'
     | '/api/app/projects/$projectId/revision'
     | '/api/app/projects/$projectId/snapshot'
     | '/api/app/projects/$projectId/template-preview'
@@ -619,6 +656,7 @@ export interface RootRouteChildren {
   CloudAccountRoute: typeof CloudAccountRoute
   ProjectsRoute: typeof ProjectsRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPingRoute: typeof ApiPingRoute
   DramaProjectIdRoute: typeof DramaProjectIdRoute
@@ -635,6 +673,7 @@ export interface RootRouteChildren {
   ApiStorageUploadRoute: typeof ApiStorageUploadRoute
   ApiAppEffectsModelsRoute: typeof ApiAppEffectsModelsRoute
   ApiAppProjectsProjectIdRoute: typeof ApiAppProjectsProjectIdRouteWithChildren
+  ApiAppProjectsImportRoute: typeof ApiAppProjectsImportRoute
   ApiAppWorkflowTemplatesTemplateIdRoute: typeof ApiAppWorkflowTemplatesTemplateIdRoute
   ApiAppProjectsIndexRoute: typeof ApiAppProjectsIndexRoute
   ApiAppWorkflowTemplatesIndexRoute: typeof ApiAppWorkflowTemplatesIndexRoute
@@ -689,6 +728,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -866,6 +912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAppProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/app/projects/import': {
+      id: '/api/app/projects/import'
+      path: '/api/app/projects/import'
+      fullPath: '/api/app/projects/import'
+      preLoaderRoute: typeof ApiAppProjectsImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/app/workflow-templates/': {
       id: '/api/app/workflow-templates/'
       path: '/api/app/workflow-templates'
@@ -920,6 +973,13 @@ declare module '@tanstack/react-router' {
       path: '/organization-preview'
       fullPath: '/api/app/projects/$projectId/organization-preview'
       preLoaderRoute: typeof ApiAppProjectsProjectIdOrganizationPreviewRouteImport
+      parentRoute: typeof ApiAppProjectsProjectIdRoute
+    }
+    '/api/app/projects/$projectId/package': {
+      id: '/api/app/projects/$projectId/package'
+      path: '/package'
+      fullPath: '/api/app/projects/$projectId/package'
+      preLoaderRoute: typeof ApiAppProjectsProjectIdPackageRouteImport
       parentRoute: typeof ApiAppProjectsProjectIdRoute
     }
     '/api/app/projects/$projectId/revision': {
@@ -1057,6 +1117,7 @@ interface ApiAppProjectsProjectIdRouteChildren {
   ApiAppProjectsProjectIdOrganizationRoute: typeof ApiAppProjectsProjectIdOrganizationRoute
   ApiAppProjectsProjectIdOrganizationAssetsRoute: typeof ApiAppProjectsProjectIdOrganizationAssetsRoute
   ApiAppProjectsProjectIdOrganizationPreviewRoute: typeof ApiAppProjectsProjectIdOrganizationPreviewRoute
+  ApiAppProjectsProjectIdPackageRoute: typeof ApiAppProjectsProjectIdPackageRoute
   ApiAppProjectsProjectIdRevisionRoute: typeof ApiAppProjectsProjectIdRevisionRoute
   ApiAppProjectsProjectIdSnapshotRoute: typeof ApiAppProjectsProjectIdSnapshotRoute
   ApiAppProjectsProjectIdTemplatePreviewRoute: typeof ApiAppProjectsProjectIdTemplatePreviewRoute
@@ -1078,6 +1139,7 @@ const ApiAppProjectsProjectIdRouteChildren: ApiAppProjectsProjectIdRouteChildren
       ApiAppProjectsProjectIdOrganizationAssetsRoute,
     ApiAppProjectsProjectIdOrganizationPreviewRoute:
       ApiAppProjectsProjectIdOrganizationPreviewRoute,
+    ApiAppProjectsProjectIdPackageRoute: ApiAppProjectsProjectIdPackageRoute,
     ApiAppProjectsProjectIdRevisionRoute: ApiAppProjectsProjectIdRevisionRoute,
     ApiAppProjectsProjectIdSnapshotRoute: ApiAppProjectsProjectIdSnapshotRoute,
     ApiAppProjectsProjectIdTemplatePreviewRoute:
@@ -1105,6 +1167,7 @@ const rootRouteChildren: RootRouteChildren = {
   CloudAccountRoute: CloudAccountRoute,
   ProjectsRoute: ProjectsRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPingRoute: ApiPingRoute,
   DramaProjectIdRoute: DramaProjectIdRoute,
@@ -1121,6 +1184,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStorageUploadRoute: ApiStorageUploadRoute,
   ApiAppEffectsModelsRoute: ApiAppEffectsModelsRoute,
   ApiAppProjectsProjectIdRoute: ApiAppProjectsProjectIdRouteWithChildren,
+  ApiAppProjectsImportRoute: ApiAppProjectsImportRoute,
   ApiAppWorkflowTemplatesTemplateIdRoute:
     ApiAppWorkflowTemplatesTemplateIdRoute,
   ApiAppProjectsIndexRoute: ApiAppProjectsIndexRoute,

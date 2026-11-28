@@ -1,98 +1,79 @@
 export const meta = {
-  title: 'BeatDesign Privacy Policy',
-  description: 'How the local-first BeatDesign workspace stores data and connects to BeatAPI and other services.',
-  updated_at: '2026-08-22',
+  title: 'Kaijing Privacy Policy',
+  description: 'How the Kaijing workspace stores data locally and when information is sent through the platform gateway or other services.',
+  updated_at: '2026-11-28',
 }
 
-BeatDesign is an open-source, local-first AI canvas maintained by BeatAPI. This Privacy Policy explains how the official BeatDesign distribution stores information locally and when information leaves your environment.
+Kaijing (开镜, website [vercelai.cn](https://vercelai.cn)) is an open-source short-drama and generation workspace. This Privacy Policy explains how the official distribution stores information locally and when information may leave your environment.
 
-This policy applies to BeatDesign itself. When you use a BeatAPI account, API key, credits, file service, or hosted generation workflow, the [BeatAPI Privacy Policy](https://beatapi.io/privacy-policy) also applies to BeatAPI's processing.
+Parts of the workspace UI originated in the BeatDesign open-source project. Source attribution and licenses are in LICENSE, NOTICE, and related notices in the repository. That does not change Kaijing as the public product name.
 
 ## 1. Local-first by default
 
-The BeatDesign open-source distribution does not include user accounts, authentication, payments, subscriptions, advertising, or built-in analytics. Projects and workspace state are stored in the database configured by the operator. The default local setup uses a SQLite file on the same computer.
+Projects and workspace state are stored in the operator-configured database. A default local install uses a SQLite file on this computer. Projects stay on this computer by default; you can export a project package and continue work elsewhere.
 
-BeatDesign does not send project content to its maintainers merely because you open, edit, arrange, or import it. Selecting or dragging a local file into a project stores it in the local project workspace; it is not sent to a generation provider until you confirm a generation or another action that requires transmission.
+Opening, editing, arranging, importing, or exporting a project does not send project contents to the project maintainers. Local files are kept in the local project space until you confirm generation or another action that must transmit data.
 
-## 2. Information stored in your workspace
+## 2. Information stored in the workspace
 
-Depending on the features you use, BeatDesign may store the following in your local or operator-controlled environment:
+Depending on the features you use, Kaijing may store locally or in an operator-controlled environment:
 
-- Project names, Canvas documents, Studio settings, node positions, and workflow state.
-- Imported images, videos, audio, and related local asset indexes.
-- Prompts, generation settings, model selections, task identifiers, status history, and output URLs.
-- BeatAPI configuration, masked credential previews, and storage configuration.
-- Technical records needed to recover projects, prevent duplicate submissions, and display generation history.
+- Project names, scripts and boards, aspect ratio, canvas documents, studio settings, node positions, and workflow state.
+- Imported images, video, audio, and local asset indexes.
+- Prompts, generation parameters, model choices, job identifiers, status history, and output URLs.
+- Your own keys saved in advanced settings (encrypted), redacted credential previews, and storage settings.
+- Technical records needed to restore projects, prevent duplicate submissions, and show generation history.
 
-The operator of the installation controls this database and the files attached to it.
+The operator of the install controls the corresponding database and associated files.
 
-## 3. Information sent when you generate
+## 3. Accounts, sign-in, and credits
 
-When you confirm a generation, BeatDesign sends the information needed to perform that request. Depending on the selected workflow, this may include:
+If you choose to sign in, the operator stores the account information needed for registration, sessions, and credit ledgers. New users receive a starter credit amount intended to cover a first episode or first shot (the amount shown on the account page is authoritative; it may currently be a clearly labeled placeholder). Credit balances, grants, and deductions are kept in the operator-controlled ledger.
 
-- Your prompt, model choice, duration, resolution, aspect ratio, and other generation parameters.
-- Selected reference images, video, audio, subtitles, source URLs, or other media.
-- A BeatAPI API key sent server-to-server for authentication.
-- Project or request identifiers needed for task status, error handling, and output retrieval.
+Browsing the interface and writing a script do not require sign-in. Confirming generation, using starter credits, or starting a top-up requires sign-in and may process account and billing information.
 
-These requests are sent to the official BeatAPI endpoint and may be processed by BeatAPI's upstream AI, infrastructure, storage, and security providers. Provider processing is governed by the [BeatAPI Privacy Policy](https://beatapi.io/privacy-policy) and any model-specific terms that apply.
+## 4. Information sent after you confirm generation
 
-## 4. API keys and storage credentials
+When you confirm generation, Kaijing sends the information required to complete the request. Depending on the workflow, this may include prompts and parameters, selected reference media, session credentials or your own key from advanced settings, and identifiers needed for status, errors, and outputs.
 
-BeatDesign is designed to keep provider and storage credentials on the server side. Credentials saved through the workspace settings are encrypted before being stored in the local database. Local SQLite installations use a per-install encryption key that is excluded from version control; hosted installations must configure their own stable encryption key.
+By default these requests go through the Kaijing platform gateway and may be processed by upstream AI, infrastructure, storage, and security providers. If you use your own key in advanced settings, that provider’s privacy policy also applies.
 
-Credentials are used to make the provider or storage requests you initiate. BeatDesign displays only masked previews in the interface. You are responsible for protecting the device, server, environment files, database, encryption key, backups, and administrator access associated with your installation.
+## 5. API keys and storage credentials
 
-## 5. Storage and generated media
+The ordinary path uses the platform gateway and does not ask you to enter a third-party key. If you save your own key or storage credentials in advanced settings, Kaijing encrypts them before writing them to the local or operator database.
 
-Imported local assets are copied into the project-owned local asset directory in the default SQLite setup. When a confirmed workflow requires a remote reference, BeatDesign may upload that reference just in time to BeatAPI Files or to storage configured by the operator.
+Protect the devices, servers, environment files, databases, encryption keys, backups, and admin access associated with your install.
 
-Generated files may remain at URLs returned by BeatAPI or an upstream provider and may be indexed locally instead of copied to your device. Availability and retention of those remote files are controlled by the relevant service. Download important outputs if you need a durable local copy.
+## 6. Storage and generated media
 
-## 6. Browser data, cookies, and telemetry
+In the default SQLite environment, imported local assets are copied into a project-specific local directory. When a confirmed workflow needs remote reference media, Kaijing may upload it to platform storage or an operator-configured bucket.
 
-BeatDesign may store essential interface preferences, such as language or theme, in your browser or an essential cookie. The open-source distribution does not include advertising trackers or maintainer-operated behavioral analytics and does not transmit product telemetry to the maintainers by default.
+Generated files may remain at URLs returned by the platform or upstream providers. Download important outputs, or export a project package for locally stored content, if you need a long-term copy.
 
-Your browser, hosting platform, reverse proxy, network operator, or a modified deployment may create their own technical logs. Those logs are controlled by the relevant operator, not by the BeatDesign open-source project.
+## 7. Browser data, cookies, and telemetry
 
-## 7. Self-hosted and third-party deployments
+Kaijing may store language, theme, and one-time preferences such as “just look around” in the browser or necessary cookies. The open-source distribution does not include advertising trackers or maintainer-operated behavioral analytics, and does not send product telemetry to maintainers by default.
 
-If you use BeatDesign through a deployment operated by another person or organization, that operator may change the software, connect additional services, enable logging or analytics, require accounts, or establish its own retention rules. The operator is responsible for explaining those practices and responding to privacy requests concerning that deployment.
+## 8. Self-hosting and third-party deployments
 
-If you operate BeatDesign for other people, you must provide an accurate privacy notice, establish an appropriate legal basis for processing, limit access, protect credentials, define retention and deletion practices, and comply with applicable privacy and data-protection laws.
+If you use a deployment run by someone else, that operator may change the software, connect extra services, enable logs or analytics, require accounts, or set their own retention rules. They should disclose those practices and handle privacy requests for that deployment.
 
-## 8. How information may be used or disclosed
+## 9. Use and disclosure
 
-The BeatDesign open-source project does not receive your local workspace data by default. Information intentionally sent to BeatAPI is used and disclosed as described in the BeatAPI Privacy Policy, including to provide requested workflows, authenticate requests, operate credits and billing, secure the service, troubleshoot failures, comply with law, and work with necessary service providers.
+The open-source project does not receive your local workspace data by default. Information you send to the platform gateway or a third-party generation service is used to complete the requested workflow, validate requests, operate credits and billing, protect the service, troubleshoot, comply with law, and use necessary vendors.
 
-We do not claim that third-party AI providers have identical privacy or retention practices. Review the applicable provider information before submitting sensitive or regulated content.
+## 10. Retention and deletion
 
-## 9. Data retention and deletion
+Local project data remains under your or the operator’s control until deleted according to that environment’s backup and retention rules. Deleting a local project may not delete information already sent to the platform, storage providers, or upstream models. For access, correction, export, or deletion of cloud data held by the product operator, use the contact details published on [vercelai.cn](https://vercelai.cn).
 
-Local project data remains in the database and project asset folders controlled by you or your deployment operator until it is deleted, overwritten, or removed according to that environment's backup and retention practices.
+## 11. Security
 
-Deleting a local project does not necessarily delete information already sent to BeatAPI, storage providers, or upstream model providers. To request access, correction, export, or deletion of information held by BeatAPI, contact [support@beatapi.io](mailto:support@beatapi.io). Other providers may require a separate request under their own policies.
+Kaijing uses reasonable technical protections for a local-first design, including server-side credential handling and encryption of saved keys. No software or transmission is perfectly secure. Keep the software updated, bind local dev servers to trusted interfaces, and rotate credentials after a suspected leak.
 
-## 10. Security
+## 12. Updates
 
-BeatDesign uses reasonable technical safeguards for its intended local-first architecture, including server-side credential handling and encryption of saved provider secrets. No software, device, storage system, or internet transmission can be guaranteed completely secure.
+We may update this policy and will change the date on this page. Continued use of the official distribution or website means you understand the updated policy.
 
-Keep BeatDesign updated, bind local development servers to trusted interfaces, avoid exposing the workspace directly to the public internet, use deployment-level access controls, keep secrets out of source control, and rotate credentials after suspected exposure.
+## 13. Contact
 
-## 11. Your choices and rights
-
-In a local installation, you can inspect, export, or delete files and database records under your control. If an organization operates your BeatDesign deployment, contact that operator first about data stored in its environment.
-
-Depending on where you live, you may have rights to access, correct, delete, restrict, object to, or obtain a portable copy of personal information held by a service provider. Requests concerning BeatAPI can be sent to [support@beatapi.io](mailto:support@beatapi.io). We may need to verify your identity and may retain limited records where required for security, billing, fraud prevention, dispute resolution, or law.
-
-## 12. Children's privacy
-
-BeatDesign is a general-purpose creative tool and is not directed to children who cannot legally consent to data processing in their jurisdiction. Operators who make BeatDesign available to minors are responsible for age-appropriate notices, parental consent where required, content safeguards, and applicable legal compliance.
-
-## 13. Changes to this Policy
-
-We may update this Privacy Policy as BeatDesign evolves. We will update the date above when changes are published. Material changes may also be announced through the official repository or [BeatDesign website](https://beatapi.io/design).
-
-## 14. Contact
-
-For questions about this Privacy Policy or BeatAPI data requests, contact [support@beatapi.io](mailto:support@beatapi.io). For a third-party or self-hosted deployment, contact that deployment's operator about information stored or processed in its environment.
+Questions about this policy can be sent through the contact details published on [vercelai.cn](https://vercelai.cn).

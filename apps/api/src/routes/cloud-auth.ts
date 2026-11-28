@@ -1,10 +1,18 @@
 import { validatePassword } from "@workspace/auth"
-import { creditAccounts, user } from "@workspace/db"
+import {
+  PLACEHOLDER_CREDIT_COSTS,
+  PLACEHOLDER_CREDIT_PLANS,
+  WELCOME_CREDIT_AMOUNT,
+  WELCOME_CREDIT_NOTE,
+  creditAccounts,
+  user,
+} from "@workspace/db"
 import { eq } from "drizzle-orm"
 import { Hono, type Context } from "hono"
 import { auth } from "../lib/auth"
 import { callBetterAuth, type CloudAuthAction } from "../lib/cloud-auth-proxy"
 import { db } from "../lib/db"
+import { createCheckoutPlaceholder, ensureWelcomeCredits } from "../lib/welcome-credits"
 
 type Credentials = {
   email?: unknown
@@ -16,11 +24,8 @@ function asText(value: unknown): string {
   return typeof value === "string" ? value.trim() : ""
 }
 
-async function ensureCreditAccount(userId: string) {
-  await db.insert(creditAccounts).values({ userId }).onConflictDoNothing()
-}
-
 async function sessionForUser(userId: string) {
+  await ensureWelcomeCredits(userId)
   const rows = await db
     .select({
       id: user.id,
@@ -37,6 +42,12 @@ async function sessionForUser(userId: string) {
   return {
     user: { id: row.id, email: row.email, name: row.name },
     balance: row.balance ?? "0",
+    welcomeGrant: {
+      amount: WELCOME_CREDIT_AMOUNT,
+      note: WELCOME_CREDIT_NOTE,
+    },
+    costs: PLACEHOLDER_CREDIT_COSTS,
+    plans: PLACEHOLDER_CREDIT_PLANS,
   }
 }
 
@@ -99,7 +110,6 @@ cloudAuth.post("/register", async (c) => {
   }
   const userId = userIdFromPayload(proxied.payload)
   if (!userId) return c.json({ message: "注册失败" }, 502)
-  await ensureCreditAccount(userId)
   return c.json({ session: await sessionForUser(userId) })
 })
 
@@ -114,7 +124,6 @@ cloudAuth.post("/login", async (c) => {
   }
   const userId = userIdFromPayload(proxied.payload)
   if (!userId) return c.json({ message: "账号或密码错误" }, 401)
-  await ensureCreditAccount(userId)
   return c.json({ session: await sessionForUser(userId) })
 })
 
@@ -128,6 +137,50 @@ cloudAuth.get("/session", async (c) => {
 cloudAuth.post("/logout", async (c) => {
   await proxy(c, "logout", {})
   return c.json({ session: null })
+})
+
+cloudAuth.get("/credits/plans", async (c) => {
+  const proxied = await proxy(c, "session")
+  const userId = userIdFromPayload(proxied.payload)
+  const session = userId ? await sessionForUser(userId) : null
+  return c.json({
+    session,
+    welcomeGrant: {
+      amount: WELCOME_CREDIT_AMOUNT,
+      note: WELCOME_CREDIT_NOTE,
+    },
+    costs: PLACEHOLDER_CREDIT_COSTS,
+    plans: PLACEHOLDER_CREDIT_PLANS,
+  })
+})
+
+
+cloudAuth.post("/credits/checkout", async (c) => {
+  const proxied = await proxy(c, "session")
+  const userId = userIdFromPayload(proxied.payload)
+  if (!userId) return c.json({ message: "登录后才能充值。" }, 401)
+  const body = (await c.req.json().catch(() => null)) as { planId?: unknown } | null
+  const planId = asText(body?.planId)
+  const plan = PLACEHOLDER_CREDIT_PLANS.find((item) => item.id === planId)
+  if (!plan) return c.json({ message: "请选择一个套餐。" }, 400)
+  const intent = await createCheckoutPlaceholder({
+    userId,
+    planId: plan.id,
+    credits: plan.credits,
+    priceLabel: plan.priceLabel,
+  })
+  return c.json({
+    message: "支付通道尚未开通。已记下这条待支付意向，没有扣款，也没有增加积分。",
+    intent: {
+      id: intent?.id,
+      planId: plan.id,
+      planName: plan.name,
+      credits: plan.credits,
+      priceLabel: plan.priceLabel,
+      status: "placeholder",
+    },
+    session: await sessionForUser(userId),
+  })
 })
 
 export default cloudAuth

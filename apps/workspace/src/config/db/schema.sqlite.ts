@@ -395,6 +395,8 @@ export const dramaProjects = sqliteTable('drama_projects', {
   currentScriptId: text('current_script_id'),
   currentStoryboardId: text('current_storyboard_id'),
   quality: text('quality').notNull().default('standard'),
+  aspectRatio: text('aspect_ratio').notNull().default('9:16'),
+  cloudBackupStatus: text('cloud_backup_status').notNull().default('local'),
   updatedAt: dramaTimestamp,
 });
 

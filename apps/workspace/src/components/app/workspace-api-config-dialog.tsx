@@ -168,14 +168,7 @@ function ApiConfigForm({
         {saving ? t('saving') : t('save')}
       </button>
 
-      <a
-        href="https://beatapi.io/dashboard/apikeys"
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex text-[12px] font-semibold text-[#ff8b4d] transition hover:text-[#ffa26b]"
-      >
-        {t('getKey')}
-      </a>
+      <p className="text-[12px] leading-5 text-white/50">{t('getKey')}</p>
     </div>
   );
 }

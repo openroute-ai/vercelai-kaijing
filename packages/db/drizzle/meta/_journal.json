@@ -15,6 +15,13 @@
       "when": 1795237000000,
       "tag": "0001_cloud_realm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795860000000,
+      "tag": "0002_welcome_checkout",
+      "breakpoints": true
     }
   ]
 }
