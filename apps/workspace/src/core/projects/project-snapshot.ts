@@ -209,10 +209,10 @@ const normalizeCard = (value: unknown): CanvasCard | null => {
             value.textContent,
             MAX_RESULT_TEXT_CHARS
           ),
-          textRole: ['script', 'character', 'storyboard'].includes(
+          textRole: ['script', 'character', 'scene', 'prop', 'storyboard', 'shot'].includes(
             String(value.textRole)
           )
-            ? (value.textRole as 'script' | 'character' | 'storyboard')
+            ? (value.textRole as 'script' | 'character' | 'scene' | 'prop' | 'storyboard' | 'shot')
             : ('note' as const),
         }
       : {}),

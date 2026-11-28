@@ -449,7 +449,10 @@
         "note": "メモ",
         "script": "脚本",
         "character": "キャラクター設定",
+        "scene": "シーン",
+        "prop": "小道具",
         "storyboard": "ショット指示",
+        "shot": "カット",
         "placeholder": "脚本、キャラクター設定、ショット指示を記入…",
         "referenceHint": "生成ノードの参照からこのテキストを選択"
       }

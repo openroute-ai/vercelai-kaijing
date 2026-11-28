@@ -16,7 +16,7 @@ export type CanvasReferenceMediaType = CanvasCardMediaType | 'audio';
 export type CanvasAssetMediaType = CanvasCardMediaType | 'audio' | 'timeline';
 export type CanvasGenerationMode = CanvasCardMediaType | 'analysis';
 export type CanvasCardKind = 'asset' | 'generation' | 'output' | 'text';
-export type CanvasTextRole = 'note' | 'script' | 'character' | 'storyboard';
+export type CanvasTextRole = 'note' | 'script' | 'character' | 'scene' | 'prop' | 'storyboard' | 'shot';
 export type CanvasTextReference = {
   cardId: string;
   name: string;

@@ -32,7 +32,7 @@ export const assetFirstGenerationRequestSchema = z
           .object({
             cardId: z.string().min(1).max(200),
             name: z.string().max(500),
-            textRole: z.enum(['note', 'script', 'character', 'storyboard']),
+            textRole: z.enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot']),
             textContent: z.string().max(100_000),
           })
           .strict()

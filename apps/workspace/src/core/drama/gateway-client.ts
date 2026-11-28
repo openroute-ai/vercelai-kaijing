@@ -22,8 +22,22 @@ export class GatewayError extends Error {
   }
 }
 
+export type DirectorTextResult = {
+  source: 'openroute' | 'builtin'
+  text: string
+  error?: string
+  jobId?: string
+}
+
 export type DramaGateway = {
   getSession(): Promise<{ loggedIn: boolean; balance: number | null; offline: boolean }>
+  director(input: {
+    task: 'rewrite_script' | 'extract_entities' | 'breakdown_storyboard' | 'write_prompts'
+    payload: Record<string, unknown>
+    quality?: string
+    aspectRatio?: string
+    idempotencyKey?: string
+  }): Promise<DirectorTextResult>
   submit(input: {
     kind: 'text' | 'image' | 'video'
     prompt: string
@@ -94,6 +108,36 @@ export function createDramaGateway({
         }
       } catch {
         return { loggedIn: false, balance: null, offline: true }
+      }
+    },
+    async director(input) {
+      let response: Response
+      try {
+        response = await fetchImpl(`${apiBase()}/api/v1/director/tasks`, {
+          method: 'POST',
+          headers: headers({ 'content-type': 'application/json' }),
+          body: JSON.stringify(input),
+        })
+      } catch {
+        throw new GatewayError('无法连接开镜薄云，请确认 API 已启动。', 503, 'unavailable')
+      }
+      const payload = await read(response)
+      const message =
+        (typeof payload.message === 'string' && payload.message) ||
+        (typeof payload.error === 'string' && payload.error) ||
+        `导演文本任务失败（${response.status}）`
+      if (response.status === 401) throw new GatewayError(message, 401, 'needs_login')
+      if (response.status === 402) throw new GatewayError(message, 402, 'needs_credits')
+      if (response.status === 403) throw new GatewayError(message, 403)
+      if (!response.ok) throw new GatewayError(message, response.status, 'unavailable')
+      const source = payload.source === 'openroute' ? 'openroute' : 'builtin'
+      const text = typeof payload.text === 'string' ? payload.text : ''
+      if (!text) throw new GatewayError('薄云没有返回导演文本。', 503, 'unavailable')
+      return {
+        source,
+        text,
+        error: typeof payload.error === 'string' ? payload.error : undefined,
+        jobId: typeof payload.jobId === 'string' ? payload.jobId : undefined,
       }
     },
     async submit(input) {

@@ -70,7 +70,7 @@ export function TextCardNode({
               })
             }
           >
-            {(['note', 'script', 'character', 'storyboard'] as const).map(
+            {(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot'] as const).map(
               (role) => (
                 <option
                   key={role}

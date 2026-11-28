@@ -1,14 +1,10 @@
 /**
- * 「做一集」导演编排。文本/图像/视频生成经开镜薄云调用 api.openroute.cn。
- * 无密钥时不伪造出片；文本可回退到本机结构化编排并写回短剧数据。
+ * 「做一集」导演编排。导演文本与形象图/镜头视频均经开镜薄云。
+ * 工作台不持有平台密钥，只调用 apps/api。无密钥时不伪造出片。
  */
 import { randomUUID } from 'node:crypto';
 
 import {
-  buildBreakdownPrompt,
-  buildExtractPrompt,
-  buildRewritePrompt,
-  buildWritePromptsPrompt,
   composeBreakdown,
   composeExtract,
   composePrompts,
@@ -35,9 +31,10 @@ import {
   writeShotPrompts,
   type StoredStep,
 } from './director-persist';
-import { createDramaGateway, GatewayError, type DramaGateway, type GatewayJob } from './gateway-client';
+import { createDramaGateway, GatewayError, type DirectorTextResult, type DramaGateway, type GatewayJob } from './gateway-client';
 import { assembleEpisodeTimeline } from './assemble-episode';
 import { loadDramaDraft, type DramaDraft } from './persist';
+import { syncDramaCanvas } from './sync-canvas';
 
 export const EPISODE_STEPS = [
   { id: 'rewrite_script', label: '改写剧本', kind: 'text' },
@@ -129,6 +126,32 @@ async function saveGeneratedAsset(input: {
   return assetId;
 }
 
+
+async function syncCanvasSafe(projectId: string) {
+  try {
+    await syncDramaCanvas(projectId);
+  } catch {
+    // 画布同步失败不中断导演编排，打开画布时会再试一次。
+  }
+}
+
+async function runDirectorText(input: {
+  gateway: DramaGateway
+  task: 'rewrite_script' | 'extract_entities' | 'breakdown_storyboard' | 'write_prompts'
+  payload: Record<string, unknown>
+  quality?: string
+  aspectRatio?: string
+  idempotencyKey?: string
+}): Promise<DirectorTextResult> {
+  return input.gateway.director({
+    task: input.task,
+    payload: input.payload,
+    quality: input.quality,
+    aspectRatio: input.aspectRatio,
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
 async function pollJob(gateway: DramaGateway, job: GatewayJob, opts: { sleep: (ms: number) => Promise<void>; timeoutMs: number }) {
   if (job.status !== 'queued' && job.status !== 'running') return job;
   const started = Date.now();
@@ -204,6 +227,7 @@ export async function runEpisodeDirector(input: {
 
   const finish = async (status: EpisodeRunResult['status'], message: string) => {
     await persist(status, message);
+    await syncCanvasSafe(input.projectId);
     const draft = await reloadDraft(input.projectId);
     return {
       ok: true as const,
@@ -223,36 +247,34 @@ export async function runEpisodeDirector(input: {
     await persist('running');
     try {
       let rewritten = composeRewrite(source);
-      let detail = '已用开镜内置文本编排写回一版可编辑剧本（未调用 OpenRoute）。';
+      let detail = '已用开镜内置文本编排写回一版可编辑剧本（经薄云返回，未调用 OpenRoute）。';
       try {
-        const job = await requestGeneration(
+        const ran = await runDirectorText({
           gateway,
-          {
-            kind: 'text',
-            prompt: buildRewritePrompt(source),
-            quality: draft0.settings.quality,
-            idempotencyKey: `${runId}:rewrite`,
-            metadata: { task: 'rewrite_script', payload: source, aspectRatio: draft0.settings.aspectRatio },
-          },
-          { sleep, timeoutMs: pollTimeoutMs }
-        );
-        if (job.status === 'succeeded' && job.result?.text) {
-          rewritten = parseRewriteOutput(job.result.text);
-          detail = '已通过 OpenRoute 文本接口改写，并写回本机。';
-        } else if (job.status !== 'succeeded') {
-          // keep builtin result, explain
-          detail = `${detail} OpenRoute：${job.errorMessage || '未返回可用文本'}。`;
+          task: 'rewrite_script',
+          payload: { source },
+          quality: draft0.settings.quality,
+          aspectRatio: draft0.settings.aspectRatio,
+          idempotencyKey: `${runId}:rewrite`,
+        });
+        rewritten = parseRewriteOutput(ran.text);
+        if (ran.source === 'openroute') {
+          detail = '已通过薄云调用 OpenRoute 改写，并写回本机。';
+        } else {
+          detail = ran.error
+            ? `已用开镜内置文本编排写回一版可编辑剧本（${ran.error}）。`
+            : '已用开镜内置文本编排写回一版可编辑剧本（经薄云返回，未调用 OpenRoute）。';
         }
       } catch (error) {
-        if (error instanceof GatewayError && error.code === 'needs_login') {
-          // still write local structure, later generate steps will block
-          detail = '尚未登录平台网关。已先用内置编排写回可编辑剧本，生成形象和视频前需要登录。';
-        } else if (error instanceof GatewayError && error.code === 'needs_credits') {
+        if (error instanceof GatewayError && error.code === 'needs_credits') {
           return finishAfterCredits(error.message);
-        } else if (!(error instanceof GatewayError && error.code === 'unavailable')) {
-          throw error;
-        } else {
+        }
+        if (error instanceof GatewayError && error.code === 'needs_login') {
+          detail = '尚未登录。已先用内置编排写回可编辑剧本，生成形象和视频前需要登录。';
+        } else if (error instanceof GatewayError && error.code === 'unavailable') {
           detail = `${detail} ${error.message}`;
+        } else {
+          throw error;
         }
       }
       await writeRewrittenScript({
@@ -289,26 +311,26 @@ export async function runEpisodeDirector(input: {
     setStep('extract_entities', 'running', '正在提取角色、场景和道具…');
     await persist('running');
     let entities = composeExtract({ title: script.title, body: script.body });
-    let detail = '已用开镜内置编排提取资产并写回本机。';
+    let detail = '已用开镜内置编排提取资产并写回本机（经薄云返回，未调用 OpenRoute）。';
     try {
-      const job = await requestGeneration(
+      const ran = await runDirectorText({
         gateway,
-        {
-          kind: 'text',
-          prompt: buildExtractPrompt({ title: script.title, body: script.body }),
-          quality: draft.settings.quality,
-          idempotencyKey: `${runId}:extract`,
-          metadata: { task: 'extract_entities', payload: { title: script.title, body: script.body } },
-        },
-        { sleep, timeoutMs: pollTimeoutMs }
-      );
-      if (job.status === 'succeeded' && job.result?.text) {
-        entities = parseExtractOutput(job.result.text);
-        detail = '已通过 OpenRoute 提取资产并写回本机。';
+        task: 'extract_entities',
+        payload: { script: { title: script.title, body: script.body } },
+        quality: draft.settings.quality,
+        idempotencyKey: `${runId}:extract`,
+      });
+      entities = parseExtractOutput(ran.text);
+      if (ran.source === 'openroute') {
+        detail = '已通过薄云提取资产并写回本机。';
+      } else if (ran.error) {
+        detail = `已用开镜内置编排提取资产并写回本机（${ran.error}）。`;
       }
     } catch (error) {
       if (error instanceof GatewayError && error.code === 'needs_credits') return finishAfterCredits(error.message);
-      if (!(error instanceof GatewayError)) {
+      if (error instanceof GatewayError && (error.code === 'unavailable' || error.code === 'needs_login')) {
+        detail = `${detail} ${error.message}`;
+      } else if (!(error instanceof GatewayError)) {
         setStep('extract_entities', 'failed', error instanceof Error ? error.message : '提取失败。');
         return finish('failed', '提取角色失败。');
       }
@@ -328,24 +350,24 @@ export async function runEpisodeDirector(input: {
     let shots = composeBreakdown({ body: script.body });
     let detail = '已用开镜内置编排拆出分镜并写回本机。重跑会新建一版，不会改掉旧版镜头。';
     try {
-      const job = await requestGeneration(
+      const ran = await runDirectorText({
         gateway,
-        {
-          kind: 'text',
-          prompt: buildBreakdownPrompt({ title: script.title, body: script.body }),
-          quality: draft.settings.quality,
-          idempotencyKey: `${runId}:breakdown`,
-          metadata: { task: 'breakdown_storyboard', payload: { body: script.body } },
-        },
-        { sleep, timeoutMs: pollTimeoutMs }
-      );
-      if (job.status === 'succeeded' && job.result?.text) {
-        shots = parseBreakdownOutput(job.result.text);
-        detail = '已通过 OpenRoute 拆分镜并写回本机。重跑会新建一版分镜。';
+        task: 'breakdown_storyboard',
+        payload: { script: { title: script.title, body: script.body } },
+        quality: draft.settings.quality,
+        idempotencyKey: `${runId}:breakdown`,
+      });
+      shots = parseBreakdownOutput(ran.text);
+      if (ran.source === 'openroute') {
+        detail = '已通过薄云拆分镜并写回本机。重跑会新建一版分镜。';
+      } else if (ran.error) {
+        detail = `已用开镜内置编排拆出分镜并写回本机（${ran.error}）。重跑会新建一版，不会改掉旧版镜头。`;
       }
     } catch (error) {
       if (error instanceof GatewayError && error.code === 'needs_credits') return finishAfterCredits(error.message);
-      if (!(error instanceof GatewayError)) {
+      if (error instanceof GatewayError && (error.code === 'unavailable' || error.code === 'needs_login')) {
+        detail = `${detail} ${error.message}`;
+      } else if (!(error instanceof GatewayError)) {
         setStep('breakdown_storyboard', 'failed', error instanceof Error ? error.message : '拆镜失败。');
         return finish('failed', '拆镜失败。');
       }
@@ -383,31 +405,33 @@ export async function runEpisodeDirector(input: {
     });
     let detail = `已按锁定的画面比例 ${draft.settings.aspectRatio} 写好提示词。`;
     try {
-      const job = await requestGeneration(
+      const ran = await runDirectorText({
         gateway,
-        {
-          kind: 'text',
-          prompt: buildWritePromptsPrompt({
-            aspectRatio: draft.settings.aspectRatio,
-            quality: draft.settings.quality,
-            shots: shotPayload,
-          }),
+        task: 'write_prompts',
+        payload: {
+          script: { title: script.title, body: script.body },
+          storyboard: board,
+          characters: draft.characters,
+          scenes: draft.scenes,
           quality: draft.settings.quality,
-          idempotencyKey: `${runId}:prompts`,
-          metadata: {
-            task: 'write_prompts',
-            payload: { aspectRatio: draft.settings.aspectRatio, quality: draft.settings.quality, shots: shotPayload },
-          },
+          aspectRatio: draft.settings.aspectRatio,
+          shots: shotPayload,
         },
-        { sleep, timeoutMs: pollTimeoutMs }
-      );
-      if (job.status === 'succeeded' && job.result?.text) {
-        prompts = parsePromptsOutput(job.result.text, board.shots.length);
-        detail = `已通过 OpenRoute 按锁定比例 ${draft.settings.aspectRatio} 写好提示词。`;
+        quality: draft.settings.quality,
+        aspectRatio: draft.settings.aspectRatio,
+        idempotencyKey: `${runId}:prompts`,
+      });
+      prompts = parsePromptsOutput(ran.text, board.shots.length);
+      if (ran.source === 'openroute') {
+        detail = `已通过薄云按锁定比例 ${draft.settings.aspectRatio} 写好提示词。`;
+      } else if (ran.error) {
+        detail = `已按锁定的画面比例 ${draft.settings.aspectRatio} 写好提示词（${ran.error}）。`;
       }
     } catch (error) {
       if (error instanceof GatewayError && error.code === 'needs_credits') return finishAfterCredits(error.message);
-      if (!(error instanceof GatewayError)) {
+      if (error instanceof GatewayError && (error.code === 'unavailable' || error.code === 'needs_login')) {
+        detail = `${detail} ${error.message}`;
+      } else if (!(error instanceof GatewayError)) {
         setStep('write_prompts', 'failed', error instanceof Error ? error.message : '写提示词失败。');
         return finish('failed', '写提示词失败。');
       }

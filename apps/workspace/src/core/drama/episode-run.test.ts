@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { createClient } from '@libsql/client';
 
-import type { DramaGateway, GatewayJob } from './gateway-client';
+import { GatewayError, type DramaGateway, type GatewayJob } from './gateway-client';
 
 async function applyBaseSchema(databaseFile: string) {
   const client = createClient({ url: `file:${databaseFile}` });
@@ -22,14 +22,19 @@ async function applyBaseSchema(databaseFile: string) {
   client.close();
 }
 
-function failingMediaGateway(): DramaGateway & { textCalls: number; mediaCalls: number } {
+function failingMediaGateway(): DramaGateway & { textCalls: number; mediaCalls: number; directorCalls: number } {
   const jobs = new Map<string, GatewayJob>();
   let seq = 0;
   const gateway = {
     textCalls: 0,
     mediaCalls: 0,
+    directorCalls: 0,
     async getSession() {
       return { loggedIn: true, balance: 80, offline: false };
+    },
+    async director() {
+      gateway.directorCalls += 1;
+      throw new GatewayError('尚未配置 OpenRoute 平台密钥。不会伪造图片或视频。', 503, 'unavailable');
     },
     async submit(input) {
       if (input.kind === 'text') {
@@ -50,7 +55,7 @@ function failingMediaGateway(): DramaGateway & { textCalls: number; mediaCalls: 
     async get(jobId) {
       return jobs.get(jobId) ?? { id: jobId, status: 'failed', errorMessage: '找不到任务' };
     },
-  } satisfies DramaGateway & { textCalls: number; mediaCalls: number };
+  } satisfies DramaGateway & { textCalls: number; mediaCalls: number; directorCalls: number };
   return gateway;
 }
 
@@ -100,6 +105,7 @@ test('做一集会写回可编辑剧本和分镜，无密钥时图像视频清�
     assert.ok(!(draft.storyboard?.shots ?? []).some((shot) => shot.status === 'ready' && shot.videoAssetId));
 
     const textCalls = gateway.textCalls;
+    const directorCalls = gateway.directorCalls;
     const second = await runEpisodeDirector({
       projectId: created.id,
       deps: { gateway, sleep: async () => undefined, pollTimeoutMs: 10 },
@@ -107,6 +113,7 @@ test('做一集会写回可编辑剧本和分镜，无密钥时图像视频清�
     assert.equal(second.ok, true);
     if (!second.ok) return;
     assert.equal(gateway.textCalls, textCalls, '重试不应重跑已成功的文本步骤');
+    assert.equal(gateway.directorCalls, directorCalls, '重试不应重跑已成功的导演文本任务');
     const reloaded = await loadDramaDraft(created.id);
     assert.equal(reloaded?.script?.body, draft.script?.body);
   } finally {

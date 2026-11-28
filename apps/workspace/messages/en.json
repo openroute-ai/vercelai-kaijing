@@ -449,7 +449,10 @@
         "note": "Note",
         "script": "Script",
         "character": "Character",
+        "scene": "Scene",
+        "prop": "Prop",
         "storyboard": "Shot prompt",
+        "shot": "Shot",
         "placeholder": "Write a script, character description, or shot prompt…",
         "referenceHint": "Attach from a generation node’s reference picker"
       }

@@ -449,7 +449,10 @@
         "note": "笔记",
         "script": "剧本",
         "character": "角色设定",
+        "scene": "场景",
+        "prop": "道具",
         "storyboard": "分镜提示词",
+        "shot": "镜头",
         "placeholder": "在这里编写剧本、角色设定或分镜提示词…",
         "referenceHint": "在生成节点的参考选择器中引用此文本"
       }

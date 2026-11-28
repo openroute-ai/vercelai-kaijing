@@ -66,6 +66,9 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@workspace/drama-core':
+        specifier: workspace:*
+        version: link:../../packages/drama-core
       '@workspace/providers':
         specifier: workspace:*
         version: link:../../packages/providers

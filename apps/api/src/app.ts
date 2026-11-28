@@ -16,6 +16,7 @@ import health from "./routes/health"
 import hello from "./routes/hello"
 import generations from "./routes/generations"
 import cloudAuth from "./routes/cloud-auth"
+import director from "./routes/director"
 
 const app = new Hono()
 const apiV1 = new OpenAPIHono()
@@ -23,7 +24,7 @@ const hasExplicitOrigins = env.BETTER_AUTH_TRUSTED_ORIGINS.length > 0
 
 app.use("*", async (c, next) => {
   const path = c.req.path
-  if (path.startsWith("/api/v1/generations")) {
+  if (path.startsWith("/api/v1/generations") || path.startsWith("/api/v1/director")) {
     return timeout(120_000)(c, next)
   }
   return timeout(5000)(c, next)
@@ -67,6 +68,7 @@ apiV1.route("/health", health)
 apiV1.route("/hello", hello)
 apiV1.route("/generations", generations)
 apiV1.route("/cloud", cloudAuth)
+apiV1.route("/director", director)
 
 apiV1.doc("/open-api", {
   openapi: "3.0.0",

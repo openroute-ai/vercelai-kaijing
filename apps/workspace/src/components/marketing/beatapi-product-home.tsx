@@ -51,7 +51,7 @@ export function BeatApiProductHome({ locale }: { locale: string }) {
             </p>
             <h2 className="mt-3 text-2xl font-semibold">用一句话做一集</h2>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              写下想法或粘贴小说，保存剧本和分镜，再按步骤做一集。自动导演还在接通中，不会假装已经出片。
+              写下想法或粘贴小说，按步骤走完剧本、角色与场景、分镜板，再做一集。导演已接通开镜薄云；没有真实镜头视频时不会假装已经出片。
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link

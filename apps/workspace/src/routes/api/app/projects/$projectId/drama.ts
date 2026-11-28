@@ -8,6 +8,8 @@ import {
   loadDramaDraft,
   saveDramaDraft,
 } from '@/core/drama/persist';
+import { saveDramaWorkbenchDraft } from '@/core/drama/workbench-persist';
+import { syncDramaCanvas } from '@/core/drama/sync-canvas';
 import { getProject } from '@/core/projects/projects';
 import {
   MAX_WORKSPACE_JSON_REQUEST_BYTES,
@@ -116,6 +118,41 @@ async function POST({
     });
     if (!recorded.ok) return Response.json({ error: recorded.message }, { status: 400 });
     return Response.json(recorded);
+  }
+
+  if (payload.action === 'save-workbench') {
+    const saved = await saveDramaWorkbenchDraft(params.projectId, {
+      script: payload.script,
+      storyboard: payload.storyboard,
+      quality: payload.quality,
+      aspectRatio: payload.aspectRatio,
+      characters: Array.isArray(payload.characters) ? payload.characters as never : undefined,
+      scenes: Array.isArray(payload.scenes) ? payload.scenes as never : undefined,
+      props: Array.isArray(payload.props) ? payload.props as never : undefined,
+    });
+    if (!saved.ok) {
+      return Response.json({ error: saved.issues.join('；') || '保存失败' }, { status: saved.status });
+    }
+    try {
+      await syncDramaCanvas(params.projectId);
+    } catch {
+      // 保存成功仍返回稿件；画布可在打开时再同步。
+    }
+    return Response.json({ draft: saved.draft });
+  }
+
+  if (payload.action === 'sync-canvas') {
+    const found = await getProject({ projectId: params.projectId });
+    if (!found) return Response.json({ error: '找不到项目' }, { status: 404 });
+    const result = await syncDramaCanvas(params.projectId);
+    if (!result.ok) return Response.json({ error: result.message }, { status: 400 });
+    const draft = await loadDramaDraft(params.projectId);
+    return Response.json({
+      draft,
+      synced: true,
+      created: 'created' in result ? result.created : 0,
+      message: result.message,
+    });
   }
 
   const saved = await saveDramaDraft(params.projectId, {

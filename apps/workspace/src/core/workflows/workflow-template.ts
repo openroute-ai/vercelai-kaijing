@@ -33,7 +33,7 @@ const frame = z
 const configurationSchema = z
   .object({
     type: z.enum(['text', 'image', 'video']),
-    textRole: z.enum(['note', 'script', 'character', 'storyboard']).optional(),
+    textRole: z.enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot']).optional(),
     textContent: z.string().max(100_000).optional(),
     generationMode: z.enum(['image', 'video', 'analysis']).optional(),
     analysisDepth: z.enum(['standard', 'deep']).optional(),

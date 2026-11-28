@@ -120,7 +120,7 @@ const generationSnapshotSchema = z
           .object({
             cardId: commandIdSchema,
             name: z.string().max(500),
-            textRole: z.enum(['note', 'script', 'character', 'storyboard']),
+            textRole: z.enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot']),
             textContent: z.string().max(100_000),
           })
           .strict()
@@ -133,7 +133,7 @@ const generationSnapshotSchema = z
 const canvasCardCommonShape = {
   id: commandIdSchema,
   textContent: z.string().max(100_000).optional(),
-  textRole: z.enum(['note', 'script', 'character', 'storyboard']).optional(),
+  textRole: z.enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot']).optional(),
   assetId: commandIdSchema.nullable().optional(),
   generationMode: generationModeSchema.optional(),
   analysisDepth: analysisDepthSchema.optional(),
@@ -181,7 +181,7 @@ const canvasCardUnion = z.discriminatedUnion('kind', [
       type: z.literal('text'),
       textContent: z.string().max(100_000),
       textRole: z
-        .enum(['note', 'script', 'character', 'storyboard'])
+        .enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot'])
         .default('note'),
       assetId: z.null().optional(),
       url: z.null().default(null),
@@ -241,7 +241,7 @@ const legacyCanvasOperationSchema = z.discriminatedUnion('type', [
       name: z.string().trim().min(1).max(500).optional(),
       textContent: z.string().max(100_000).optional(),
       textRole: z
-        .enum(['note', 'script', 'character', 'storyboard'])
+        .enum(['note', 'script', 'character', 'scene', 'prop', 'storyboard', 'shot'])
         .optional(),
       frame: frameSchema.optional(),
     })

@@ -1,8 +1,19 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
+import { DramaAssetCard, type EditableAsset } from '@/components/kaijing/drama/asset-card';
+import { DramaShotCard, type EditableShot } from '@/components/kaijing/drama/shot-card';
+import { DramaStepRail } from '@/components/kaijing/drama/step-rail';
+import {
+  assetPreviewUrl,
+  inferWorkbenchStep,
+  type WorkbenchStepId,
+} from '@/components/kaijing/drama/workbench-steps';
 import { ProjectPackageBar } from '@/components/kaijing/project-package-bar';
 import { BeatApiProductShell } from '@/components/marketing/beatapi-product-shell';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { selectEpisodeExportDocument } from '@/core/drama/assemble-plan';
 import { exportTimelineMp4, inspectLocalMedia, saveBlobToUserChoice } from '@/core/editor/media-export';
 import type { TimelineDocument } from '@/core/editor/timeline-document';
@@ -21,21 +32,13 @@ export const Route = createFileRoute('/drama/$projectId')({
   component: DramaEditorPage,
 });
 
-type ShotDraft = {
-  description: string;
-  dialogue: string;
-  durationMs: number;
-  status?: string;
-  imagePrompt?: string | null;
-  videoPrompt?: string | null;
-  errorMessage?: string | null;
-};
 type StepState = {
   id: string;
   label: string;
   state: string;
   detail: string;
 };
+
 type Draft = {
   settings?: {
     quality: string;
@@ -50,12 +53,18 @@ type Draft = {
     body: string;
     revision: number;
   } | null;
-  storyboard: { title: string; shots: ShotDraft[] } | null;
-  characters?: Array<{ name: string; description: string; assetId?: string | null }>;
+  storyboard: { id?: string; title: string; shots: EditableShot[] } | null;
+  characters?: EditableAsset[];
+  scenes?: EditableAsset[];
+  props?: EditableAsset[];
 };
 
-function emptyShot(): ShotDraft {
-  return { description: '', dialogue: '', durationMs: 4000 };
+function emptyShot(): EditableShot {
+  return { description: '', dialogue: '', durationMs: 4000, status: 'draft' };
+}
+
+function emptyAsset(): EditableAsset {
+  return { name: '', description: '', visualNotes: '' };
 }
 
 function DramaEditorPage() {
@@ -66,7 +75,7 @@ function DramaEditorPage() {
   const [sourceText, setSourceText] = useState('');
   const [body, setBody] = useState('');
   const [boardTitle, setBoardTitle] = useState('分镜');
-  const [shots, setShots] = useState<ShotDraft[]>([emptyShot()]);
+  const [shots, setShots] = useState<EditableShot[]>([emptyShot()]);
   const [quality, setQuality] = useState('standard');
   const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9'>('9:16');
   const [locked, setLocked] = useState(false);
@@ -77,11 +86,15 @@ function DramaEditorPage() {
   const [steps, setSteps] = useState<StepState[]>([]);
   const [runMessage, setRunMessage] = useState('');
   const [session, setSession] = useState<KaijingSession | null>(null);
-  const [characters, setCharacters] = useState<Array<{ name: string; description: string; assetId?: string | null }>>([]);
+  const [characters, setCharacters] = useState<EditableAsset[]>([]);
+  const [scenes, setScenes] = useState<EditableAsset[]>([]);
+  const [props, setProps] = useState<EditableAsset[]>([]);
   const [storageMessage, setStorageMessage] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [step, setStep] = useState<WorkbenchStepId>('input');
+  const [hasTimeline, setHasTimeline] = useState(false);
 
-  function applyDraft(draft: Draft) {
+  function applyDraft(draft: Draft, options?: { keepStep?: boolean }) {
     if (draft.settings) {
       setQuality(draft.settings.quality || 'standard');
       setAspectRatio(draft.settings.aspectRatio || '9:16');
@@ -100,6 +113,19 @@ function DramaEditorPage() {
       setShots(draft.storyboard.shots.length ? draft.storyboard.shots : [emptyShot()]);
     }
     setCharacters(draft.characters ?? []);
+    setScenes(draft.scenes ?? []);
+    setProps(draft.props ?? []);
+    if (!options?.keepStep) {
+      setStep(
+        inferWorkbenchStep({
+          script: draft.script,
+          characters: draft.characters,
+          scenes: draft.scenes,
+          props: draft.props,
+          storyboard: draft.storyboard,
+        })
+      );
+    }
   }
 
   async function load() {
@@ -132,44 +158,57 @@ function DramaEditorPage() {
   useEffect(() => {
     void load();
     void fetchCloudSession().then((result) => setSession(result.session));
+    void apiJsonGet<{ timeline: { document: TimelineDocument } | null }>(
+      `/api/app/projects/${projectId}/timeline`
+    )
+      .then((payload) => setHasTimeline(Boolean(payload.timeline?.document)))
+      .catch(() => setHasTimeline(false));
   }, [projectId]);
 
-  const payload = useMemo(
+  const workbenchPayload = useMemo(
     () => ({
+      action: 'save-workbench',
       quality,
       aspectRatio,
       script: { title, sourceKind, sourceText, body },
       storyboard: {
         title: boardTitle,
-        shots: shots.map((shot) => ({
+        shots: shots.map((shot, index) => ({
+          id: shot.id,
+          index,
           description: shot.description,
           dialogue: shot.dialogue,
           durationMs: shot.durationMs,
         })),
       },
+      characters,
+      scenes,
+      props,
     }),
-    [aspectRatio, boardTitle, body, quality, shots, sourceKind, sourceText, title]
+    [aspectRatio, boardTitle, body, characters, props, quality, scenes, shots, sourceKind, sourceText, title]
   );
 
-  async function save(event?: FormEvent) {
+  async function save(event?: FormEvent, options?: { silent?: boolean }) {
     event?.preventDefault();
-    setStatus('正在保存…');
+    if (!options?.silent) setStatus('正在保存…');
     try {
       const data = await apiJsonPost<{ draft: Draft }>(
         `/api/app/projects/${projectId}/drama`,
-        payload
+        workbenchPayload
       );
-      if (data.draft) applyDraft(data.draft);
-      setStatus(`已保存第 ${data.draft?.script?.revision ?? ''} 稿`);
+      if (data.draft) applyDraft(data.draft, { keepStep: true });
+      if (!options?.silent) setStatus(`已保存第 ${data.draft?.script?.revision ?? ''} 稿`);
+      return data.draft;
     } catch (error) {
       setStatus(error instanceof Error ? error.message : '保存失败');
+      return null;
     }
   }
 
   async function makeEpisode() {
     setRunMessage('正在准备「做一集」…');
     try {
-      await apiJsonPost(`/api/app/projects/${projectId}/drama`, payload);
+      await apiJsonPost(`/api/app/projects/${projectId}/drama`, workbenchPayload);
       const data = await apiJsonPost<{
         steps: StepState[];
         message: string;
@@ -182,6 +221,7 @@ function DramaEditorPage() {
       if (data.draft) applyDraft(data.draft);
       setSteps(data.steps ?? []);
       setRunMessage(data.message);
+      setStep('produce');
     } catch (error) {
       setRunMessage(error instanceof Error ? error.message : '做一集失败');
     }
@@ -194,11 +234,23 @@ function DramaEditorPage() {
         `/api/app/projects/${projectId}/drama`,
         { action: 'assemble-episode' }
       );
-      if (data.draft) applyDraft(data.draft);
+      if (data.draft) applyDraft(data.draft, { keepStep: true });
       setSteps(data.steps ?? []);
       setRunMessage(data.message);
+      setHasTimeline(true);
+      setStep('finish');
     } catch (error) {
       setRunMessage(error instanceof Error ? error.message : '铺轨失败');
+    }
+  }
+
+  async function syncCanvas() {
+    setStatus('正在同步到画布…');
+    try {
+      await apiJsonPost(`/api/app/projects/${projectId}/drama`, { action: 'sync-canvas' });
+      setStatus('已把剧本、角色、场景和镜头同步到画布。打开或刷新画布即可看到节点。');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : '同步画布失败');
     }
   }
 
@@ -271,7 +323,7 @@ function DramaEditorPage() {
         `/api/app/projects/${projectId}/drama`,
         { action: 'settings', cloudBackupStatus: 'queued' }
       );
-      if (data.draft) applyDraft(data.draft);
+      if (data.draft) applyDraft(data.draft, { keepStep: true });
       setStatus('已记下云端备份意向。备份尚未开通，请同时导出项目包。');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : '无法记下备份意向');
@@ -292,10 +344,26 @@ function DramaEditorPage() {
   }
 
   const insufficient = Boolean(session) && balanceNumber(session?.balance) <= 0;
+  const allShotsReady =
+    shots.length > 0 && shots.every((shot) => shot.status === 'ready' && shot.videoAssetId);
+  const canRetryFailed = steps.some(
+    (item) =>
+      item.id !== 'assemble_episode' &&
+      (item.state === 'failed' || item.state === 'needs_login' || item.state === 'needs_credits')
+  );
+  const assembleFailed = steps.some(
+    (item) => item.id === 'assemble_episode' && (item.state === 'failed' || item.state === 'blocked')
+  );
+  const assembleComplete = steps.some((item) => item.id === 'assemble_episode' && item.state === 'complete');
+
+  function updateAsset(kind: 'characters' | 'scenes' | 'props', index: number, next: EditableAsset) {
+    const setter = kind === 'characters' ? setCharacters : kind === 'scenes' ? setScenes : setProps;
+    setter((current) => current.map((item, itemIndex) => (itemIndex === index ? next : item)));
+  }
 
   return (
     <BeatApiProductShell active="drama" locale={locale}>
-      <main className="mx-auto flex min-h-[70vh] max-w-3xl flex-col gap-6 px-6 pb-16 pt-12">
+      <main className="mx-auto flex min-h-[70vh] max-w-5xl flex-col gap-6 px-6 pb-16 pt-12">
         <p>
           <Link className="text-sm text-white/60" to="/drama">
             返回短剧列表
@@ -303,13 +371,13 @@ function DramaEditorPage() {
         </p>
         <h1 className="text-3xl font-semibold">做一集</h1>
         <p className="text-sm leading-6 text-white/70">
-          项目和成片都默认保存在这台电脑上，云端不会自动存这份 MP4。画面比例创建后不能再改。「做一集」会写回剧本和分镜，经开镜薄云生成形象和视频；镜头都就绪后会自动按顺序铺进时间线，并用分镜里已有的对白做字幕。没有真实镜头时不会假装成片。铺轨失败可只重试这一步。整集 MP4 请再选一个保存位置导出。
+          按步骤完成：小说或一句话、剧本、角色与场景、分镜板、出片、再到时间线成片。项目默认保存在这台电脑。导演文本和生成都走开镜薄云；没有真实镜头视频时不会假装已经出片。画面比例创建后不能再改。
         </p>
         <ProjectPackageBar projectId={projectId} />
 
         {!session ? (
           <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-50">
-            登录后才能生成。写剧本和保存不需要登录。
+            登录后才能生成形象和视频。写剧本、编辑资产和保存不需要登录。
             <Link className="ml-2 underline" to="/cloud-account">
               去登录
             </Link>
@@ -325,224 +393,242 @@ function DramaEditorPage() {
           <p className="text-sm text-white/55">已登录，积分 {formatCredits(session.balance)}。</p>
         )}
 
-        <form className="flex flex-col gap-4" onSubmit={(event) => void save(event)}>
-          <label className="flex flex-col gap-1 text-sm">
-            集标题
-            <input
-              className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </label>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="flex flex-col gap-1 text-sm">
-              来源
-              <select
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-                value={sourceKind}
-                onChange={(event) => setSourceKind(event.target.value)}
-              >
-                <option value="one_liner">一句话</option>
-                <option value="novel">小说</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              画质
-              <select
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-                value={quality}
-                onChange={(event) => setQuality(event.target.value)}
-              >
-                <option value="fast">快速</option>
-                <option value="standard">标准</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              画面比例
-              <select
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2 disabled:opacity-60"
-                value={aspectRatio}
-                disabled={locked}
-                onChange={(event) => setAspectRatio(event.target.value as '9:16' | '16:9')}
-              >
-                <option value="9:16">竖屏 9:16（默认）</option>
-                <option value="16:9">横屏 16:9</option>
-              </select>
-            </label>
-          </div>
-          {locked ? (
-            <p className="text-xs text-white/45">画面比例已锁定为 {aspectRatio}，创建后不能再改。</p>
-          ) : (
-            <p className="text-xs text-white/45">第一次保存后，画面比例会锁定。</p>
-          )}
-          <label className="flex flex-col gap-1 text-sm">
-            原始输入
-            <textarea
-              className="min-h-24 rounded-md border border-white/15 bg-black/30 px-3 py-2"
-              value={sourceText}
-              onChange={(event) => setSourceText(event.target.value)}
-              placeholder="用一句话描述这一集，或粘贴小说"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            剧本正文
-            <textarea
-              className="min-h-40 rounded-md border border-white/15 bg-black/30 px-3 py-2"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            分镜标题
-            <input
-              className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-              value={boardTitle}
-              onChange={(event) => setBoardTitle(event.target.value)}
-            />
-          </label>
-          {shots.map((shot, index) => (
-            <div key={index} className="grid gap-2 rounded-xl border border-white/10 p-3 sm:grid-cols-3">
-              <input
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2 sm:col-span-2"
-                placeholder="这一镜发生什么"
-                value={shot.description}
-                onChange={(event) =>
-                  setShots((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, description: event.target.value } : item
-                    )
-                  )
-                }
+        <DramaStepRail current={step} onSelect={setStep} />
+
+        <form className="flex flex-col gap-5" onSubmit={(event) => void save(event)}>
+          {step === 'input' ? (
+            <section className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1 text-sm">
+                集标题
+                <Input
+                  className="border-white/15 bg-black/30"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </label>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <label className="flex flex-col gap-1 text-sm">
+                  来源
+                  <select
+                    className="h-8 rounded-md border border-white/15 bg-black/30 px-3 text-sm"
+                    value={sourceKind}
+                    onChange={(event) => setSourceKind(event.target.value)}
+                  >
+                    <option value="one_liner">一句话</option>
+                    <option value="novel">小说</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  画质
+                  <select
+                    className="h-8 rounded-md border border-white/15 bg-black/30 px-3 text-sm"
+                    value={quality}
+                    onChange={(event) => setQuality(event.target.value)}
+                  >
+                    <option value="fast">快速</option>
+                    <option value="standard">标准</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  画面比例
+                  <select
+                    className="h-8 rounded-md border border-white/15 bg-black/30 px-3 text-sm disabled:opacity-60"
+                    value={aspectRatio}
+                    disabled={locked}
+                    onChange={(event) => setAspectRatio(event.target.value as '9:16' | '16:9')}
+                  >
+                    <option value="9:16">竖屏 9:16（默认）</option>
+                    <option value="16:9">横屏 16:9</option>
+                  </select>
+                </label>
+              </div>
+              {locked ? (
+                <p className="text-xs text-white/45">画面比例已锁定为 {aspectRatio}，创建后不能再改。</p>
+              ) : (
+                <p className="text-xs text-white/45">第一次保存后，画面比例会锁定。</p>
+              )}
+              <label className="flex flex-col gap-1 text-sm">
+                原始输入
+                <Textarea
+                  className="min-h-32 border-white/15 bg-black/30"
+                  value={sourceText}
+                  onChange={(event) => setSourceText(event.target.value)}
+                  placeholder="用一句话描述这一集，或粘贴小说"
+                />
+              </label>
+            </section>
+          ) : null}
+
+          {step === 'script' ? (
+            <section className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1 text-sm">
+                集标题
+                <Input
+                  className="border-white/15 bg-black/30"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                剧本正文
+                <Textarea
+                  className="min-h-64 border-white/15 bg-black/30"
+                  value={body}
+                  onChange={(event) => setBody(event.target.value)}
+                  placeholder="保存输入后点「做一集」，导演会把改写后的剧本写到这里，也可以自己改。"
+                />
+              </label>
+              {revision ? <p className="text-sm text-white/60">当前稿 revision {revision}</p> : null}
+            </section>
+          ) : null}
+
+          {step === 'assets' ? (
+            <section className="flex flex-col gap-6">
+              <AssetSection
+                title="角色"
+                kindLabel="角色"
+                items={characters}
+                projectId={projectId}
+                onChange={(index, next) => updateAsset('characters', index, next)}
+                onAdd={() => setCharacters((current) => [...current, emptyAsset()])}
               />
-              <input
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-                placeholder="对白，可空"
-                value={shot.dialogue}
-                onChange={(event) =>
-                  setShots((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index ? { ...item, dialogue: event.target.value } : item
-                    )
-                  )
-                }
+              <AssetSection
+                title="场景"
+                kindLabel="场景"
+                items={scenes}
+                projectId={projectId}
+                onChange={(index, next) => updateAsset('scenes', index, next)}
+                onAdd={() => setScenes((current) => [...current, emptyAsset()])}
               />
-              <input
-                className="rounded-md border border-white/15 bg-black/30 px-3 py-2"
-                type="number"
-                min={1}
-                value={shot.durationMs}
-                onChange={(event) =>
-                  setShots((current) =>
-                    current.map((item, itemIndex) =>
-                      itemIndex === index
-                        ? { ...item, durationMs: Number(event.target.value) }
-                        : item
-                    )
-                  )
-                }
+              <AssetSection
+                title="道具"
+                kindLabel="道具"
+                items={props}
+                projectId={projectId}
+                onChange={(index, next) => updateAsset('props', index, next)}
+                onAdd={() => setProps((current) => [...current, emptyAsset()])}
               />
-            </div>
-          ))}
+            </section>
+          ) : null}
+
+          {step === 'board' ? (
+            <section className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1 text-sm">
+                分镜标题
+                <Input
+                  className="border-white/15 bg-black/30"
+                  value={boardTitle}
+                  onChange={(event) => setBoardTitle(event.target.value)}
+                />
+              </label>
+              {shots.map((shot, index) => (
+                <DramaShotCard
+                  key={shot.id || index}
+                  index={index}
+                  shot={shot}
+                  aspectRatio={aspectRatio}
+                  previewUrl={assetPreviewUrl(projectId, shot.videoAssetId || shot.imageAssetId)}
+                  onChange={(next) =>
+                    setShots((current) => current.map((item, itemIndex) => (itemIndex === index ? next : item)))
+                  }
+                />
+              ))}
+              <Button type="button" variant="ghost" onClick={() => setShots((current) => [...current, emptyShot()])}>
+                加一镜
+              </Button>
+            </section>
+          ) : null}
+
+          {step === 'produce' ? (
+            <section className="flex flex-col gap-4">
+              <p className="text-sm leading-6 text-white/70">
+                「做一集」会把导演文本和生成请求交给开镜薄云，再把剧本、角色、分镜写回这台电脑。失败的步骤可以重试，已成功的文本步骤不会重跑。没有真实视频时不会自动导出。
+              </p>
+              {steps.length ? (
+                <ol className="flex flex-col gap-2">
+                  {steps.map((item) => (
+                    <li key={item.id} className="rounded-xl border border-white/10 px-4 py-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <strong>{item.label}</strong>
+                        <span className="text-xs text-white/50">
+                          {item.state === 'complete'
+                            ? '已完成'
+                            : item.state === 'running'
+                              ? '进行中'
+                              : item.state === 'failed'
+                                ? '失败，可重试'
+                                : item.state === 'needs_login'
+                                  ? '需要登录'
+                                  : item.state === 'needs_credits'
+                                    ? '积分不足'
+                                    : item.state === 'blocked'
+                                      ? '未完成'
+                                      : item.state}
+                        </span>
+                      </div>
+                      <p className="mt-1 leading-6 text-white/65">{item.detail}</p>
+                      {item.state === 'needs_login' ? (
+                        <Link className="mt-2 inline-block text-xs underline" to="/cloud-account">
+                          去登录后再试
+                        </Link>
+                      ) : null}
+                      {item.state === 'needs_credits' ? (
+                        <Link className="mt-2 inline-block text-xs underline" to="/cloud-account">
+                          查看积分与套餐
+                        </Link>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-sm text-white/55">还没有跑过「做一集」。保存输入后即可开始。</p>
+              )}
+            </section>
+          ) : null}
+
+          {step === 'finish' ? (
+            <section className="flex flex-col gap-4">
+              <p className="text-sm leading-6 text-white/70">
+                全部镜头就绪后，会按分镜顺序把视频和对白字幕铺进本机时间线。请打开时间线确认，再导出整集 MP4。没有真实镜头时不会出现导出入口。
+              </p>
+              <p className="text-sm text-white/60">
+                镜头就绪 {shots.filter((shot) => shot.status === 'ready' && shot.videoAssetId).length} / {shots.length}
+                {hasTimeline || assembleComplete ? ' · 时间线已有铺轨' : ' · 尚未铺进时间线'}
+              </p>
+              {allShotsReady && !assembleComplete ? (
+                <Button type="button" variant="outline" onClick={() => void retryAssemble()}>
+                  把镜头铺进时间线
+                </Button>
+              ) : null}
+            </section>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
-            <button
-              className="text-sm text-white/70"
-              type="button"
-              onClick={() => setShots((current) => [...current, emptyShot()])}
-            >
-              加一镜
-            </button>
-            <button className="rounded-md border border-white/20 px-4 py-2 text-sm" type="submit">
+            <Button className="border-white/20" variant="outline" type="submit">
               保存到本机
-            </button>
-            <button
-              className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-black"
-              type="button"
-              onClick={() => void makeEpisode()}
-            >
-              {steps.some(
-                (step) =>
-                  step.id !== 'assemble_episode' &&
-                  (step.state === 'failed' || step.state === 'needs_login' || step.state === 'needs_credits')
-              )
-                ? '重试失败步骤'
-                : '做一集'}
-            </button>
-            {steps.some((step) => step.id === 'assemble_episode' && (step.state === 'failed' || step.state === 'blocked')) ? (
-              <button
-                className="rounded-md border border-white/30 px-4 py-2 text-sm"
-                type="button"
-                onClick={() => void retryAssemble()}
-              >
+            </Button>
+            <Button type="button" onClick={() => void makeEpisode()}>
+              {canRetryFailed ? '重试失败步骤' : '做一集'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => void syncCanvas()}>
+              同步到画布
+            </Button>
+            {assembleFailed ? (
+              <Button type="button" variant="outline" onClick={() => void retryAssemble()}>
                 重试铺轨
-              </button>
+              </Button>
             ) : null}
-            {steps.some((step) => step.id === 'assemble_episode' && step.state === 'complete') ? (
-              <button
-                className="rounded-md border border-white/30 px-4 py-2 text-sm"
-                type="button"
-                disabled={exporting}
-                onClick={() => void exportEpisode()}
-              >
+            {assembleComplete ? (
+              <Button type="button" variant="outline" disabled={exporting} onClick={() => void exportEpisode()}>
                 {exporting ? '正在导出…' : '导出整集 MP4'}
-              </button>
+              </Button>
             ) : null}
           </div>
         </form>
 
-        {revision ? <p className="text-sm text-white/60">当前稿 revision {revision}</p> : null}
-        {characters.length ? (
-          <div className="text-sm leading-6 text-white/70">
-            <p className="font-medium text-white/80">角色</p>
-            {characters.map((item) => (
-              <p key={item.name}>
-                {item.name}
-                {item.assetId ? '（已有形象）' : ''}
-                {item.description ? `：${item.description}` : ''}
-              </p>
-            ))}
-          </div>
-        ) : null}
         <p className="text-sm text-white/80">{status}</p>
         {runMessage ? <p className="text-sm leading-6 text-white/80">{runMessage}</p> : null}
         {storageMessage ? <p className="text-sm leading-6 text-white/60">{storageMessage}</p> : null}
-
-        {steps.length ? (
-          <ol className="flex flex-col gap-2">
-            {steps.map((step) => (
-              <li key={step.id} className="rounded-xl border border-white/10 px-4 py-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <strong>{step.label}</strong>
-                  <span className="text-xs text-white/50">
-                    {step.state === 'complete'
-                      ? '已完成'
-                      : step.state === 'running'
-                        ? '进行中'
-                        : step.state === 'failed'
-                          ? '失败，可重试'
-                          : step.state === 'needs_login'
-                            ? '需要登录'
-                            : step.state === 'needs_credits'
-                              ? '积分不足'
-                              : step.state === 'blocked'
-                                ? '未完成'
-                                : step.state}
-                  </span>
-                </div>
-                <p className="mt-1 leading-6 text-white/65">{step.detail}</p>
-                {step.state === 'needs_login' ? (
-                  <Link className="mt-2 inline-block text-xs underline" to="/cloud-account">
-                    去登录后再试
-                  </Link>
-                ) : null}
-                {step.state === 'needs_credits' ? (
-                  <Link className="mt-2 inline-block text-xs underline" to="/cloud-account">
-                    查看积分与套餐
-                  </Link>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        ) : null}
 
         <div className="flex flex-wrap gap-4 text-sm text-white/70">
           <a href={`/canvas/${projectId}`}>在画布上查看</a>
@@ -560,5 +646,47 @@ function DramaEditorPage() {
         </div>
       </main>
     </BeatApiProductShell>
+  );
+}
+
+function AssetSection({
+  title,
+  kindLabel,
+  items,
+  projectId,
+  onChange,
+  onAdd,
+}: {
+  title: string
+  kindLabel: string
+  items: EditableAsset[]
+  projectId: string
+  onChange: (index: number, next: EditableAsset) => void
+  onAdd: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-medium">{title}</h2>
+        <Button type="button" variant="ghost" size="sm" onClick={onAdd}>
+          添加{kindLabel}
+        </Button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-white/45">还没有{kindLabel}。做一集后会自动提取，也可以先手动添加。</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item, index) => (
+            <DramaAssetCard
+              key={item.id || `${kindLabel}-${index}`}
+              kindLabel={kindLabel}
+              asset={item}
+              previewUrl={assetPreviewUrl(projectId, item.assetId)}
+              onChange={(next) => onChange(index, next)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
