@@ -155,6 +155,14 @@ cloudAuth.get("/credits/plans", async (c) => {
 })
 
 
+cloudAuth.get("/credits", async (c) => {
+  const proxied = await proxy(c, "session")
+  const userId = userIdFromPayload(proxied.payload)
+  if (!userId) return c.json({ message: "请先登录后再查看积分。" }, 401)
+  const session = await sessionForUser(userId)
+  return c.json({ session, balance: session?.balance ?? "0" })
+})
+
 cloudAuth.post("/credits/checkout", async (c) => {
   const proxied = await proxy(c, "session")
   const userId = userIdFromPayload(proxied.payload)

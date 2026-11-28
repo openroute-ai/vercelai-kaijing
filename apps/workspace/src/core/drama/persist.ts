@@ -10,7 +10,10 @@ import { parseScriptDraft, parseStoryboardDraft } from '@workspace/drama-core';
 import { and, asc, eq } from 'drizzle-orm';
 
 import {
+  dramaCharacters,
   dramaProjects,
+  dramaProps,
+  dramaScenes,
   dramaScripts,
   dramaShots,
   dramaStoryboards,
@@ -26,6 +29,20 @@ export type DramaDraftShot = {
   dialogue: string;
   durationMs: number;
   status: string;
+  imagePrompt?: string | null;
+  videoPrompt?: string | null;
+  imageAssetId?: string | null;
+  videoAssetId?: string | null;
+  errorMessage?: string | null;
+  cloudJobId?: string | null;
+};
+
+export type DramaDraftEntity = {
+  id: string;
+  name: string;
+  description: string;
+  visualNotes: string;
+  assetId?: string | null;
 };
 
 export const DRAMA_ASPECT_RATIOS = ['9:16', '16:9'] as const;
@@ -56,6 +73,9 @@ export type DramaDraft = {
     title: string;
     shots: DramaDraftShot[];
   } | null;
+  characters: DramaDraftEntity[];
+  scenes: DramaDraftEntity[];
+  props: DramaDraftEntity[];
 };
 
 export type DramaDraftInput = {
@@ -106,13 +126,26 @@ async function readDraft(db: Database, projectId: string): Promise<DramaDraft | 
     boardRow = rows[0];
   }
 
-  const shotRows = boardRow
+  const shotRows: Array<typeof dramaShots.$inferSelect> = boardRow
     ? await db
         .select()
         .from(dramaShots)
         .where(eq(dramaShots.storyboardId, boardRow.id))
         .orderBy(asc(dramaShots.index))
     : [];
+
+  const characterRows: Array<typeof dramaCharacters.$inferSelect> = await db
+    .select()
+    .from(dramaCharacters)
+    .where(eq(dramaCharacters.projectId, projectId));
+  const sceneRows: Array<typeof dramaScenes.$inferSelect> = await db
+    .select()
+    .from(dramaScenes)
+    .where(eq(dramaScenes.projectId, projectId));
+  const propRows: Array<typeof dramaProps.$inferSelect> = await db
+    .select()
+    .from(dramaProps)
+    .where(eq(dramaProps.projectId, projectId));
 
   const aspectRatio = isDramaAspectRatio(pointer?.aspectRatio)
     ? pointer.aspectRatio
@@ -140,16 +173,43 @@ async function readDraft(db: Database, projectId: string): Promise<DramaDraft | 
       ? {
           id: boardRow.id,
           title: boardRow.title,
-          shots: shotRows.map((shot: DramaDraftShot) => ({
+          shots: shotRows.map((shot) => ({
             id: shot.id,
             index: shot.index,
             description: shot.description,
             dialogue: shot.dialogue,
             durationMs: shot.durationMs,
             status: shot.status,
+            imagePrompt: shot.imagePrompt,
+            videoPrompt: shot.videoPrompt,
+            imageAssetId: shot.imageAssetId,
+            videoAssetId: shot.videoAssetId,
+            errorMessage: shot.errorMessage,
+            cloudJobId: shot.cloudJobId,
           })),
         }
       : null,
+    characters: characterRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      visualNotes: row.visualNotes,
+      assetId: row.assetId,
+    })),
+    scenes: sceneRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      visualNotes: row.visualNotes,
+      assetId: row.assetId,
+    })),
+    props: propRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      visualNotes: row.visualNotes,
+      assetId: row.assetId,
+    })),
   };
 }
 

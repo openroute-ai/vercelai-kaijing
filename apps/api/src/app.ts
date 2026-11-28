@@ -21,7 +21,13 @@ const app = new Hono()
 const apiV1 = new OpenAPIHono()
 const hasExplicitOrigins = env.BETTER_AUTH_TRUSTED_ORIGINS.length > 0
 
-app.use("*", timeout(5000))
+app.use("*", async (c, next) => {
+  const path = c.req.path
+  if (path.startsWith("/api/v1/generations")) {
+    return timeout(120_000)(c, next)
+  }
+  return timeout(5000)(c, next)
+})
 
 app.use(logger())
 app.use(compress())
@@ -67,7 +73,7 @@ apiV1.doc("/open-api", {
   info: {
     version: "0.1.0",
     title: "开镜 API",
-    description: "薄云控制面：cloud 账户、积分和生成任务占位。平台运营登录在 apps/web，不共用这套 cookie。",
+    description: "薄云控制面：cloud 账户、积分和平台生成网关。平台运营登录在 apps/web，不共用这套 cookie。",
   },
 })
 

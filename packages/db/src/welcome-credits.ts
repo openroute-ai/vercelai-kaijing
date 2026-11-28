@@ -6,10 +6,17 @@ export const WELCOME_CREDIT_NOTE =
 
 export const WELCOME_GRANT_MARKER = "welcome-grant-v1"
 
+export const CREDIT_COSTS = {
+  text: "5.0000",
+  image: "10.0000",
+  video: "40.0000",
+} as const
+
 export const PLACEHOLDER_CREDIT_COSTS = {
+  text: CREDIT_COSTS.text,
   episodeText: "20.0000",
-  characterImage: "10.0000",
-  shotVideo: "40.0000",
+  characterImage: CREDIT_COSTS.image,
+  shotVideo: CREDIT_COSTS.video,
 } as const
 
 export const PLACEHOLDER_CREDIT_PLANS = [

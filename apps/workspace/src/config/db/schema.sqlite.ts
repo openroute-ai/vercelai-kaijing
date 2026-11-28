@@ -511,6 +511,7 @@ export const dramaShots = sqliteTable(
     imageAssetId: text('image_asset_id'),
     videoAssetId: text('video_asset_id'),
     errorMessage: text('error_message'),
+    cloudJobId: text('cloud_job_id'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sqliteNowMs)
       .notNull(),
@@ -531,6 +532,7 @@ export const dramaRuns = sqliteTable('drama_runs', {
   status: text('status').notNull().default('paused'),
   cursor: text('cursor'),
   errorMessage: text('error_message'),
+  stepsJson: text('steps_json'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .default(sqliteNowMs)
     .notNull(),

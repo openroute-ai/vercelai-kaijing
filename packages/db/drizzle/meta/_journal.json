@@ -22,6 +22,13 @@
       "when": 1795860000000,
       "tag": "0002_welcome_checkout",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795865000000,
+      "tag": "0003_generation_idempotency",
+      "breakpoints": true
     }
   ]
 }

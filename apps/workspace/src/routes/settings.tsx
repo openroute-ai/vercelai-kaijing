@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { WorkspaceApiConfigDialog } from '@/components/app/workspace-api-config-dialog';
+import { OpenRouteKeyForm } from '@/components/kaijing/openroute-key-form';
 import { BeatApiProductShell } from '@/components/marketing/beatapi-product-shell';
-import { ACTIVE_GENERATION_PROVIDER_ID } from '@/config/generation-providers';
 import { getLocale } from '@/core/workspace-lib/shims/next-intl-server';
 
 export const Route = createFileRoute('/settings')({
@@ -26,17 +25,17 @@ function SettingsPage() {
         <section className="rounded-[20px] border border-white/10 p-5">
           <h2 className="text-lg font-semibold">默认生成方式</h2>
           <p className="mt-2 text-sm leading-6 text-white/70">
-            登录开镜账户后，生成会走平台网关并使用积分。短剧的自动出片还在接通中，不会在未完成时显示「已出片」。
+            登录开镜账户后，「做一集」会经开镜薄云调用 https://api.openroute.cn/v1，并使用开镜积分（预扣、成功实扣、失败回退）。没有平台密钥时会清晰失败，不会伪造出片。
           </p>
         </section>
 
         <section id="own-key" className="rounded-[20px] border border-white/10 p-5">
           <h2 className="text-lg font-semibold">用我自己的密钥（高级）</h2>
           <p className="mt-2 text-sm leading-6 text-white/70">
-            只给需要自己接模型供应商的人。普通用户请留空，继续使用平台网关。
+            普通用户不必填写。若要使用自己的额度，请填写 OpenRoute 的 sk- 密钥，不要填写各家官网的原生密钥。
           </p>
           <div className="mt-4">
-            <WorkspaceApiConfigDialog providerId={ACTIVE_GENERATION_PROVIDER_ID} />
+            <OpenRouteKeyForm />
           </div>
         </section>
 

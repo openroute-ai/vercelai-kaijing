@@ -44,6 +44,17 @@ export async function configureLocalSqlite(
             statements.push("ALTER TABLE drama_projects ADD COLUMN cloud_backup_status TEXT NOT NULL DEFAULT 'local'");
           }
         }
+
+        const shotColumns = await client.execute('PRAGMA table_info(drama_shots)');
+        const shotNames = new Set(shotColumns.rows.map((row) => String(row.name)));
+        if (shotNames.size && !shotNames.has('cloud_job_id')) {
+          statements.push('ALTER TABLE drama_shots ADD COLUMN cloud_job_id TEXT');
+        }
+        const runColumns = await client.execute('PRAGMA table_info(drama_runs)');
+        const runNames = new Set(runColumns.rows.map((row) => String(row.name)));
+        if (runNames.size && !runNames.has('steps_json')) {
+          statements.push('ALTER TABLE drama_runs ADD COLUMN steps_json TEXT');
+        }
         for (const [table, fields] of [
           ['project_command_receipt', ['request_hash']],
           ['generation_upload_intent', ['source_card_id', 'source_context_digest']],

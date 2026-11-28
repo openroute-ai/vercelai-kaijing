@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { startEpisodePlaceholder } from '@/core/drama/episode-run';
+import { runEpisodeDirector } from '@/core/drama/episode-run';
 import {
   ensureDramaSettings,
   loadDramaDraft,
@@ -68,11 +68,9 @@ async function POST({
   }
 
   if (payload.action === 'make-episode') {
-    const started = await startEpisodePlaceholder({
+    const started = await runEpisodeDirector({
       projectId: params.projectId,
-      loggedIn: payload.loggedIn === true,
-      creditBalance:
-        typeof payload.creditBalance === 'number' ? payload.creditBalance : null,
+      request,
     });
     if (!started.ok) {
       return Response.json({ error: started.message }, { status: started.status });

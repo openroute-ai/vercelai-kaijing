@@ -17,7 +17,15 @@ export const Route = createFileRoute('/drama/$projectId')({
   component: DramaEditorPage,
 });
 
-type ShotDraft = { description: string; dialogue: string; durationMs: number; status?: string };
+type ShotDraft = {
+  description: string;
+  dialogue: string;
+  durationMs: number;
+  status?: string;
+  imagePrompt?: string | null;
+  videoPrompt?: string | null;
+  errorMessage?: string | null;
+};
 type StepState = {
   id: string;
   label: string;
@@ -39,6 +47,7 @@ type Draft = {
     revision: number;
   } | null;
   storyboard: { title: string; shots: ShotDraft[] } | null;
+  characters?: Array<{ name: string; description: string; assetId?: string | null }>;
 };
 
 function emptyShot(): ShotDraft {
@@ -64,6 +73,7 @@ function DramaEditorPage() {
   const [steps, setSteps] = useState<StepState[]>([]);
   const [runMessage, setRunMessage] = useState('');
   const [session, setSession] = useState<KaijingSession | null>(null);
+  const [characters, setCharacters] = useState<Array<{ name: string; description: string; assetId?: string | null }>>([]);
 
   function applyDraft(draft: Draft) {
     if (draft.settings) {
@@ -83,6 +93,7 @@ function DramaEditorPage() {
       setBoardTitle(draft.storyboard.title || '分镜');
       setShots(draft.storyboard.shots.length ? draft.storyboard.shots : [emptyShot()]);
     }
+    setCharacters(draft.characters ?? []);
   }
 
   async function load() {
@@ -199,7 +210,7 @@ function DramaEditorPage() {
         </p>
         <h1 className="text-3xl font-semibold">做一集</h1>
         <p className="text-sm leading-6 text-white/70">
-          项目保存在这台电脑上。画面比例创建后不能再改。自动导演还没接通，保存和进度是真的，出片结果不会假装完成。
+          项目保存在这台电脑上。画面比例创建后不能再改。「做一集」会写回剧本和分镜，再经开镜薄云调用 OpenRoute 生成形象和视频。没有真实结果时不会假装出片，失败步骤可单独重试。
         </p>
         <ProjectPackageBar projectId={projectId} />
 
@@ -355,12 +366,24 @@ function DramaEditorPage() {
               type="button"
               onClick={() => void makeEpisode()}
             >
-              做一集
+              {steps.some((step) => step.state === 'failed') ? '重试失败步骤' : '做一集'}
             </button>
           </div>
         </form>
 
         {revision ? <p className="text-sm text-white/60">当前稿 revision {revision}</p> : null}
+        {characters.length ? (
+          <div className="text-sm leading-6 text-white/70">
+            <p className="font-medium text-white/80">角色</p>
+            {characters.map((item) => (
+              <p key={item.name}>
+                {item.name}
+                {item.assetId ? '（已有形象）' : ''}
+                {item.description ? `：${item.description}` : ''}
+              </p>
+            ))}
+          </div>
+        ) : null}
         <p className="text-sm text-white/80">{status}</p>
         {runMessage ? <p className="text-sm leading-6 text-white/80">{runMessage}</p> : null}
 
@@ -372,14 +395,18 @@ function DramaEditorPage() {
                   <strong>{step.label}</strong>
                   <span className="text-xs text-white/50">
                     {step.state === 'complete'
-                      ? '已有手写结果'
-                      : step.state === 'needs_login'
-                        ? '需要登录'
-                        : step.state === 'needs_credits'
-                          ? '积分不足'
-                          : step.state === 'blocked'
-                            ? '已停止'
-                            : '尚未接通'}
+                      ? '已完成'
+                      : step.state === 'running'
+                        ? '进行中'
+                        : step.state === 'failed'
+                          ? '失败，可重试'
+                          : step.state === 'needs_login'
+                            ? '需要登录'
+                            : step.state === 'needs_credits'
+                              ? '积分不足'
+                              : step.state === 'blocked'
+                                ? '未完成'
+                                : step.state}
                   </span>
                 </div>
                 <p className="mt-1 leading-6 text-white/65">{step.detail}</p>

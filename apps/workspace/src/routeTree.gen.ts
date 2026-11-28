@@ -33,6 +33,7 @@ import { Route as StudioProjectIdRouteImport } from './routes/studio/$projectId'
 import { Route as ApiAppRecentAssetsRouteImport } from './routes/api/app/recent-assets'
 import { Route as ApiAssetsDownloadRouteImport } from './routes/api/assets/download'
 import { Route as ApiConfigBeatapiRouteImport } from './routes/api/config/beatapi'
+import { Route as ApiConfigOpenrouteRouteImport } from './routes/api/config/openroute'
 import { Route as ApiConfigStorageRouteImport } from './routes/api/config/storage'
 import { Route as ApiEffectsGenerateRouteImport } from './routes/api/effects/generate'
 import { Route as ApiEffectsMetadataRouteImport } from './routes/api/effects/metadata'
@@ -178,6 +179,11 @@ const ApiAssetsDownloadRoute = ApiAssetsDownloadRouteImport.update({
 const ApiConfigBeatapiRoute = ApiConfigBeatapiRouteImport.update({
   id: '/api/config/beatapi',
   path: '/api/config/beatapi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConfigOpenrouteRoute = ApiConfigOpenrouteRouteImport.update({
+  id: '/api/config/openroute',
+  path: '/api/config/openroute',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiConfigStorageRoute = ApiConfigStorageRouteImport.update({
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
   '/api/config/beatapi': typeof ApiConfigBeatapiRoute
+  '/api/config/openroute': typeof ApiConfigOpenrouteRoute
   '/api/config/storage': typeof ApiConfigStorageRoute
   '/api/effects/generate': typeof ApiEffectsGenerateRoute
   '/api/effects/metadata': typeof ApiEffectsMetadataRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
   '/api/config/beatapi': typeof ApiConfigBeatapiRoute
+  '/api/config/openroute': typeof ApiConfigOpenrouteRoute
   '/api/config/storage': typeof ApiConfigStorageRoute
   '/api/effects/generate': typeof ApiEffectsGenerateRoute
   '/api/effects/metadata': typeof ApiEffectsMetadataRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/api/app/recent-assets': typeof ApiAppRecentAssetsRoute
   '/api/assets/download': typeof ApiAssetsDownloadRoute
   '/api/config/beatapi': typeof ApiConfigBeatapiRoute
+  '/api/config/openroute': typeof ApiConfigOpenrouteRoute
   '/api/config/storage': typeof ApiConfigStorageRoute
   '/api/effects/generate': typeof ApiEffectsGenerateRoute
   '/api/effects/metadata': typeof ApiEffectsMetadataRoute
@@ -515,6 +524,7 @@ export interface FileRouteTypes {
     | '/api/app/recent-assets'
     | '/api/assets/download'
     | '/api/config/beatapi'
+    | '/api/config/openroute'
     | '/api/config/storage'
     | '/api/effects/generate'
     | '/api/effects/metadata'
@@ -565,6 +575,7 @@ export interface FileRouteTypes {
     | '/api/app/recent-assets'
     | '/api/assets/download'
     | '/api/config/beatapi'
+    | '/api/config/openroute'
     | '/api/config/storage'
     | '/api/effects/generate'
     | '/api/effects/metadata'
@@ -618,6 +629,7 @@ export interface FileRouteTypes {
     | '/api/app/recent-assets'
     | '/api/assets/download'
     | '/api/config/beatapi'
+    | '/api/config/openroute'
     | '/api/config/storage'
     | '/api/effects/generate'
     | '/api/effects/metadata'
@@ -665,6 +677,7 @@ export interface RootRouteChildren {
   ApiAppRecentAssetsRoute: typeof ApiAppRecentAssetsRoute
   ApiAssetsDownloadRoute: typeof ApiAssetsDownloadRoute
   ApiConfigBeatapiRoute: typeof ApiConfigBeatapiRoute
+  ApiConfigOpenrouteRoute: typeof ApiConfigOpenrouteRoute
   ApiConfigStorageRoute: typeof ApiConfigStorageRoute
   ApiEffectsGenerateRoute: typeof ApiEffectsGenerateRoute
   ApiEffectsMetadataRoute: typeof ApiEffectsMetadataRoute
@@ -847,6 +860,13 @@ declare module '@tanstack/react-router' {
       path: '/api/config/beatapi'
       fullPath: '/api/config/beatapi'
       preLoaderRoute: typeof ApiConfigBeatapiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/config/openroute': {
+      id: '/api/config/openroute'
+      path: '/api/config/openroute'
+      fullPath: '/api/config/openroute'
+      preLoaderRoute: typeof ApiConfigOpenrouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/config/storage': {
@@ -1176,6 +1196,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAppRecentAssetsRoute: ApiAppRecentAssetsRoute,
   ApiAssetsDownloadRoute: ApiAssetsDownloadRoute,
   ApiConfigBeatapiRoute: ApiConfigBeatapiRoute,
+  ApiConfigOpenrouteRoute: ApiConfigOpenrouteRoute,
   ApiConfigStorageRoute: ApiConfigStorageRoute,
   ApiEffectsGenerateRoute: ApiEffectsGenerateRoute,
   ApiEffectsMetadataRoute: ApiEffectsMetadataRoute,

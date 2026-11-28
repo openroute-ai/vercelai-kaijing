@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
-  "description": "开镜薄云 OpenAPI：cloud 账户、积分和生成任务占位。",
+  "description": "开镜薄云 OpenAPI：cloud 账户、积分和平台生成网关。",
   "engines": {
     "node": ">=22"
   },

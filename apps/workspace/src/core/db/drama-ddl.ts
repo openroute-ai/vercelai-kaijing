@@ -76,6 +76,7 @@ export const dramaTableStatements = [
     image_asset_id TEXT,
     video_asset_id TEXT,
     error_message TEXT,
+    cloud_job_id TEXT,
     created_at INTEGER NOT NULL DEFAULT ${now},
     updated_at INTEGER NOT NULL DEFAULT ${now}
   )`,
@@ -86,6 +87,7 @@ export const dramaTableStatements = [
     status TEXT NOT NULL DEFAULT 'paused',
     cursor TEXT,
     error_message TEXT,
+    steps_json TEXT,
     created_at INTEGER NOT NULL DEFAULT ${now},
     updated_at INTEGER NOT NULL DEFAULT ${now}
   )`,

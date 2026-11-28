@@ -24,3 +24,29 @@ export type {
   StoryboardDraftInput,
   StoryboardShotInput,
 } from "./validate"
+
+export {
+  buildBreakdownPrompt,
+  buildExtractPrompt,
+  buildRewritePrompt,
+  buildWritePromptsPrompt,
+  composeBreakdown,
+  composeEpisodeTextFromTask,
+  composeExtract,
+  composePrompts,
+  composeRewrite,
+  normalizeEntityName,
+  parseBreakdownOutput,
+  parseExtractOutput,
+  parsePromptsOutput,
+  parseRewriteOutput,
+} from "./text-director"
+export type {
+  BreakdownShotDraft,
+  DirectorTextTask,
+  EntityDraft,
+  ExtractedEntities,
+  RewriteInput,
+  RewrittenScript,
+  ShotPromptDraft,
+} from "./text-director"

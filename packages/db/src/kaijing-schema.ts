@@ -98,12 +98,14 @@ export const generationJobs = pgTable(
     resultJson: jsonb("result_json"),
     errorMessage: text("error_message"),
     creditCost: numeric("credit_cost", { precision: 15, scale: 4 }),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [
     index("generation_jobs_user_id_idx").on(table.userId),
     index("generation_jobs_status_idx").on(table.status),
+    uniqueIndex("generation_jobs_user_idempotency_unique").on(table.userId, table.idempotencyKey),
   ],
 )
 
