@@ -130,3 +130,62 @@ test('就绪镜头会写入本机时间线和已有对白；没有视频时拒�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test('可以只把勾选且已有真实视频的镜头铺进时间线，未生成的不能假装成片', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kaijing-assemble-pick-'));
+  const previous = process.env.BEATDESIGN_DATA_DIR;
+  process.env.BEATDESIGN_DATA_DIR = dir;
+  try {
+    await applyBaseSchema(join(dir, 'local.db'));
+    const { resetLocalDbForTests } = await import('../db/index.ts');
+    const { createProject } = await import('../projects/projects.ts');
+    const { saveDramaDraft, loadDramaDraft } = await import('./persist.ts');
+    const { markShot } = await import('./director-persist.ts');
+    const { assembleEpisodeTimeline } = await import('./assemble-episode.ts');
+
+    const created = await createProject({ name: '选镜铺轨' });
+    const saved = await saveDramaDraft(created.id, {
+      script: {
+        title: '雨夜',
+        sourceKind: 'one_liner',
+        sourceText: '一只猫在雨里回头',
+        body: '猫站住。它回头。',
+      },
+      storyboard: {
+        title: '分镜',
+        shots: [
+          { description: '猫站住', dialogue: '', durationMs: 3000 },
+          { description: '猫回头', dialogue: '', durationMs: 2000 },
+        ],
+      },
+    });
+    assert.equal(saved.ok, true);
+    if (!saved.ok) return;
+    const first = saved.draft.storyboard!.shots[0]!;
+    const second = saved.draft.storyboard!.shots[1]!;
+    const media = await seedVideoAsset(created.id, 'shot-1.mp4');
+    await markShot({ shotId: first.id, status: 'ready', videoAssetId: media.assetId });
+
+    const rejected = await assembleEpisodeTimeline({
+      projectId: created.id,
+      draft: (await loadDramaDraft(created.id))!,
+      shotIds: [second.id],
+    });
+    assert.equal(rejected.ok, false);
+    if (!rejected.ok) assert.match(rejected.message, /没有真实视频/);
+
+    const picked = await assembleEpisodeTimeline({
+      projectId: created.id,
+      draft: (await loadDramaDraft(created.id))!,
+      shotIds: [first.id],
+    });
+    assert.equal(picked.ok, true);
+    if (picked.ok) assert.equal(picked.clipCount, 1);
+  } finally {
+    process.env.BEATDESIGN_DATA_DIR = previous;
+    const { resetLocalDbForTests } = await import('../db/index.ts');
+    await resetLocalDbForTests();
+    await rm(dir, { recursive: true, force: true });
+  }
+});

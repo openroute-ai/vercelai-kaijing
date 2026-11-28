@@ -221,12 +221,18 @@ export async function markShot(input: {
     .where(eq(dramaShots.id, input.shotId));
 }
 
-export async function setCharacterAsset(characterId: string, assetId: string) {
+export async function setEntityAsset(
+  kind: 'character' | 'scene' | 'prop',
+  entityId: string,
+  assetId: string
+) {
   const db = await getDb();
-  await db
-    .update(dramaCharacters)
-    .set({ assetId, updatedAt: new Date() })
-    .where(eq(dramaCharacters.id, characterId));
+  const table = kind === 'character' ? dramaCharacters : kind === 'scene' ? dramaScenes : dramaProps;
+  await db.update(table).set({ assetId, updatedAt: new Date() }).where(eq(table.id, entityId));
+}
+
+export async function setCharacterAsset(characterId: string, assetId: string) {
+  return setEntityAsset('character', characterId, assetId);
 }
 
 export type StoredStep = {

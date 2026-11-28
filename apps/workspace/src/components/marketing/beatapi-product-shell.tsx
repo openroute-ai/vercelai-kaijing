@@ -108,10 +108,12 @@ export function BeatApiProductShell({
   active,
   locale,
   children,
+  layout = 'page',
 }: {
   active: ProductSurface;
   locale: string;
   children: ReactNode;
+  layout?: 'page' | 'workbench';
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const currentLocale = normalizeLocale(locale);
@@ -121,7 +123,11 @@ export function BeatApiProductShell({
   return (
     <div
       lang={currentLocale}
-      className="beat-product-shell min-h-[100dvh] bg-[var(--beat-bg)] pt-4 text-[#f4f4f5] selection:bg-[#ff7a33]/35 sm:pt-5"
+      className={`beat-product-shell min-h-[100dvh] bg-[var(--beat-bg)] text-[#f4f4f5] selection:bg-[#ff7a33]/35 ${
+        layout === 'workbench'
+          ? 'flex flex-col pt-3 sm:pt-4'
+          : 'pt-4 sm:pt-5'
+      }`}
     >
       <header className="sticky top-3 z-40 px-4 sm:top-4 sm:px-6">
         <div className="mx-auto flex h-[60px] w-full min-w-0 max-w-[1280px] items-center gap-3 rounded-full border border-white/[0.08] bg-[#131416]/90 px-3.5 shadow-[0_18px_60px_rgba(0,0,0,0.36)] backdrop-blur-2xl sm:px-5">
@@ -171,8 +177,17 @@ export function BeatApiProductShell({
         ) : null}
       </header>
 
-      <KaijingAppGate>{children}</KaijingAppGate>
+      {layout === 'workbench' ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <KaijingAppGate>
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          </KaijingAppGate>
+        </div>
+      ) : (
+        <KaijingAppGate>{children}</KaijingAppGate>
+      )}
 
+      {layout === 'workbench' ? null : (
       <footer className="px-5 pb-8 pt-16 text-center text-[11px] font-[500] text-[#626269]">
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <span>开镜 Kaijing</span>
@@ -187,6 +202,7 @@ export function BeatApiProductShell({
           </Link>
         </div>
       </footer>
+      )}
     </div>
   );
 }

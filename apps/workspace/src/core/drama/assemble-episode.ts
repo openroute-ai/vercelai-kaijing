@@ -45,19 +45,28 @@ export async function assembleEpisodeTimeline(input: {
   projectId: string
   draft: DramaDraft
   allowPartial?: boolean
+  shotIds?: string[]
 }) {
   const board = input.draft.storyboard;
   if (!board?.shots.length) {
     return { ok: false as const, message: '没有分镜，不能铺进时间线。' };
   }
-  const ready = listReadyEpisodeShots(board.shots.map(asShot));
-  const unfinished = board.shots.filter(
+  const selected = input.shotIds?.length ? new Set(input.shotIds) : null;
+  const pool = selected ? board.shots.filter((shot) => selected.has(shot.id)) : board.shots;
+  const ready = listReadyEpisodeShots(pool.map(asShot));
+  const unfinished = pool.filter(
     (shot) => !(shot.status === 'ready' && shot.videoAssetId)
   );
+  const allowPartial = Boolean(input.allowPartial || selected);
   if (ready.length === 0) {
-    return { ok: false as const, message: '没有真实的镜头视频，不能铺进时间线或假装已经成片。' };
+    return {
+      ok: false as const,
+      message: selected
+        ? '勾选的镜头里没有真实视频，不能铺进时间线或假装已经成片。'
+        : '没有真实的镜头视频，不能铺进时间线或假装已经成片。',
+    };
   }
-  if (unfinished.length > 0 && !input.allowPartial) {
+  if (unfinished.length > 0 && !allowPartial) {
     return {
       ok: false as const,
       message: `还有 ${unfinished.length} 个镜头未完成，默认不跳过，也不会假装已经成片。`,

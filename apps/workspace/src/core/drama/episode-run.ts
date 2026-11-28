@@ -15,8 +15,6 @@ import {
   parseRewriteOutput,
 } from '@workspace/drama-core';
 
-import { persistLocalProjectAsset } from '@/core/projects/local-project-assets';
-import { linkProjectAsset, recordUserAsset } from '@/core/workspace-lib/assets/user-assets';
 import { getConfig } from '@/modules/config/service';
 
 import {
@@ -34,6 +32,7 @@ import {
 import { createDramaGateway, GatewayError, type DirectorTextResult, type DramaGateway, type GatewayJob } from './gateway-client';
 import { assembleEpisodeTimeline } from './assemble-episode';
 import { loadDramaDraft, type DramaDraft } from './persist';
+import { saveGeneratedAsset } from './generated-media';
 import { syncDramaCanvas } from './sync-canvas';
 
 export const EPISODE_STEPS = [
@@ -76,56 +75,6 @@ function sourceFrom(draft: DramaDraft) {
     body: draft.script?.body || '',
   };
 }
-
-async function downloadMedia(outputUrl: string): Promise<{ bytes: Uint8Array; mimeType: string; filename: string }> {
-  if (outputUrl.startsWith('data:')) {
-    const match = outputUrl.match(/^data:([^;,]+);base64,(.+)$/);
-    if (!match) throw new Error('无法解析返回的图片数据。');
-    return {
-      bytes: new Uint8Array(Buffer.from(match[2], 'base64')),
-      mimeType: match[1],
-      filename: match[1].includes('png') ? 'character.png' : 'character.jpg',
-    };
-  }
-  const response = await fetch(outputUrl);
-  if (!response.ok) throw new Error(`下载生成结果失败（${response.status}）。`);
-  const mimeType = response.headers.get('content-type') || 'application/octet-stream';
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  const filename = mimeType.includes('video') ? 'shot.mp4' : mimeType.includes('png') ? 'character.png' : 'media.bin';
-  return { bytes, mimeType, filename };
-}
-
-async function saveGeneratedAsset(input: {
-  projectId: string
-  outputUrl: string
-  type: 'image' | 'video'
-  filename?: string
-}) {
-  const media = await downloadMedia(input.outputUrl);
-  const persisted = await persistLocalProjectAsset({
-    projectId: input.projectId,
-    filename: input.filename || media.filename,
-    mimeType: media.mimeType,
-    bytes: media.bytes,
-  });
-  const assetId = await recordUserAsset({
-    id: persisted.assetId,
-    type: input.type,
-    source: 'provider',
-    bucket: 'local-project-assets',
-    objectKey: persisted.objectKey,
-    publicUrl: persisted.publicUrl,
-    mimeType: media.mimeType,
-    sizeBytes: persisted.sizeBytes,
-    sha256: persisted.sha256,
-    filename: persisted.filename,
-    storageProvider: 'local',
-    originProjectId: input.projectId,
-  });
-  await linkProjectAsset({ projectId: input.projectId, assetId, role: 'generated' });
-  return assetId;
-}
-
 
 async function syncCanvasSafe(projectId: string) {
   try {
@@ -579,6 +528,8 @@ export async function runEpisodeDirector(input: {
 
 export async function runAssembleEpisodeOnly(input: {
   projectId: string
+  shotIds?: string[]
+  allowPartial?: boolean
 }): Promise<{ ok: true; result: EpisodeRunResult } | { ok: false; status: 401 | 404 | 402; message: string }> {
   const draft = await loadDramaDraft(input.projectId);
   if (!draft) return { ok: false, status: 404, message: '找不到项目' };
@@ -612,12 +563,19 @@ export async function runAssembleEpisodeOnly(input: {
       (step.id === 'generate_character_image' || step.id === 'generate_shot_video') &&
       (step.state === 'failed' || step.state === 'needs_login' || step.state === 'needs_credits')
   );
-  const readyShots = (draft.storyboard?.shots ?? []).filter((shot) => shot.status === 'ready' && shot.videoAssetId);
-  const unfinished = (draft.storyboard?.shots ?? []).filter((shot) => !(shot.status === 'ready' && shot.videoAssetId));
-  if (readyShots.length === 0 || unfinished.length > 0) {
+  const selected = input.shotIds?.length ? new Set(input.shotIds) : null;
+  const pool = selected
+    ? (draft.storyboard?.shots ?? []).filter((shot) => selected.has(shot.id))
+    : (draft.storyboard?.shots ?? []);
+  const readyShots = pool.filter((shot) => shot.status === 'ready' && shot.videoAssetId);
+  const unfinished = pool.filter((shot) => !(shot.status === 'ready' && shot.videoAssetId));
+  const allowPartial = Boolean(input.allowPartial || selected);
+  if (readyShots.length === 0 || (unfinished.length > 0 && !allowPartial)) {
     const message =
       readyShots.length === 0
-        ? '没有真实的镜头视频，不能铺进时间线或假装已经成片。'
+        ? selected
+          ? '勾选的镜头里没有真实视频，不能铺进时间线或假装已经成片。'
+          : '没有真实的镜头视频，不能铺进时间线或假装已经成片。'
         : `还有 ${unfinished.length} 个镜头未完成，默认不跳过，也不会假装已经成片。`;
     setStep('assemble_episode', mediaFailed ? 'blocked' : 'blocked', message);
     return finish('paused', message);
@@ -625,7 +583,12 @@ export async function runAssembleEpisodeOnly(input: {
 
   setStep('assemble_episode', 'running', '正在按分镜顺序把镜头和对白铺进本机时间线…');
   await persist('running');
-  const assembled = await assembleEpisodeTimeline({ projectId: input.projectId, draft });
+  const assembled = await assembleEpisodeTimeline({
+    projectId: input.projectId,
+    draft,
+    shotIds: input.shotIds,
+    allowPartial,
+  });
   if (!assembled.ok) {
     setStep('assemble_episode', 'failed', assembled.message);
     return finish('failed', assembled.message);
