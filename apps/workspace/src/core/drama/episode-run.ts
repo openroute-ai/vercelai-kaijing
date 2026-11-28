@@ -36,6 +36,7 @@ import {
   type StoredStep,
 } from './director-persist';
 import { createDramaGateway, GatewayError, type DramaGateway, type GatewayJob } from './gateway-client';
+import { assembleEpisodeTimeline } from './assemble-episode';
 import { loadDramaDraft, type DramaDraft } from './persist';
 
 export const EPISODE_STEPS = [
@@ -532,12 +533,81 @@ export async function runEpisodeDirector(input: {
     setStep(
       'assemble_episode',
       'blocked',
-      `还有 ${unfinished.length} 个镜头未完成，默认不跳过。已完成的 ${readyShots.length} 个镜头素材已在本机，可打开时间线手动使用。`
+      `还有 ${unfinished.length} 个镜头未完成，默认不跳过。已完成的 ${readyShots.length} 个镜头素材已在本机，可打开时间线手动使用。不会假装已经成片。`
     );
     return finish('paused', '部分镜头失败或未完成，没有把未完成的成片标成已导出。');
   }
-  setStep('assemble_episode', 'complete', '全部镜头视频已在本机。请打开时间线查看并导出；自动铺轨会把已完成镜头作为素材使用。');
-  return finish('completed', '这一集的剧本、分镜和镜头视频已写回本机。');
+
+  setStep('assemble_episode', 'running', '正在按分镜顺序把镜头和对白铺进本机时间线…');
+  await persist('running');
+  const assembled = await assembleEpisodeTimeline({ projectId: input.projectId, draft });
+  if (!assembled.ok) {
+    setStep('assemble_episode', 'failed', assembled.message);
+    return finish('failed', assembled.message);
+  }
+  setStep('assemble_episode', 'complete', assembled.message);
+  return finish(
+    'completed',
+    `${assembled.message} 打开时间线确认后，再导出整集 MP4 到你选择的位置。`
+  );
+}
+
+
+export async function runAssembleEpisodeOnly(input: {
+  projectId: string
+}): Promise<{ ok: true; result: EpisodeRunResult } | { ok: false; status: 401 | 404 | 402; message: string }> {
+  const draft = await loadDramaDraft(input.projectId);
+  if (!draft) return { ok: false, status: 404, message: '找不到项目' };
+  const previous = await loadLatestRun(input.projectId);
+  const steps: StoredStep[] = EPISODE_STEPS.map((item) => {
+    const prior = previous?.steps.find((step) => step.id === item.id);
+    return prior ?? stepOf(item.id, 'blocked', '等待开始。');
+  });
+  const setStep = (id: string, state: StoredStep['state'], detail: string) => {
+    const index = steps.findIndex((step) => step.id === id);
+    if (index >= 0) steps[index] = stepOf(id, state, detail);
+  };
+  const runId = previous?.id || randomUUID();
+  const persist = async (status: EpisodeRunResult['status'], message?: string) =>
+    saveDramaRun({
+      runId,
+      projectId: input.projectId,
+      status,
+      cursor: 'assemble_episode',
+      errorMessage: message ?? null,
+      steps,
+    });
+  const finish = async (status: EpisodeRunResult['status'], message: string) => {
+    await persist(status, message);
+    const nextDraft = await reloadDraft(input.projectId);
+    return { ok: true as const, result: { runId, status, draft: nextDraft, steps, message } };
+  };
+
+  const mediaFailed = steps.some(
+    (step) =>
+      (step.id === 'generate_character_image' || step.id === 'generate_shot_video') &&
+      (step.state === 'failed' || step.state === 'needs_login' || step.state === 'needs_credits')
+  );
+  const readyShots = (draft.storyboard?.shots ?? []).filter((shot) => shot.status === 'ready' && shot.videoAssetId);
+  const unfinished = (draft.storyboard?.shots ?? []).filter((shot) => !(shot.status === 'ready' && shot.videoAssetId));
+  if (readyShots.length === 0 || unfinished.length > 0) {
+    const message =
+      readyShots.length === 0
+        ? '没有真实的镜头视频，不能铺进时间线或假装已经成片。'
+        : `还有 ${unfinished.length} 个镜头未完成，默认不跳过，也不会假装已经成片。`;
+    setStep('assemble_episode', mediaFailed ? 'blocked' : 'blocked', message);
+    return finish('paused', message);
+  }
+
+  setStep('assemble_episode', 'running', '正在按分镜顺序把镜头和对白铺进本机时间线…');
+  await persist('running');
+  const assembled = await assembleEpisodeTimeline({ projectId: input.projectId, draft });
+  if (!assembled.ok) {
+    setStep('assemble_episode', 'failed', assembled.message);
+    return finish('failed', assembled.message);
+  }
+  setStep('assemble_episode', 'complete', assembled.message);
+  return finish('completed', `${assembled.message} 打开时间线确认后，再导出整集 MP4 到你选择的位置。`);
 }
 
 /** @deprecated 使用 runEpisodeDirector。保留名称以免旧引用立刻中断。 */

@@ -50,7 +50,7 @@ function DramaHomePage() {
       <main className="mx-auto flex min-h-[70vh] max-w-3xl flex-col gap-6 px-6 pb-16 pt-16">
         <h1 className="text-3xl font-semibold">短剧</h1>
         <p className="text-sm leading-6 text-white/70">
-          在本机写下剧本和分镜，或用「做一集」走完整交互。项目默认保存在这台电脑上，可在项目页导出项目包。自动出片还没接通，不会假装已经生成视频。
+          在本机写下剧本和分镜，或用「做一集」走完整交互。项目和成片都默认保存在这台电脑上，可在项目页导出项目包，也可把整集 MP4 存到自选位置。没有真实镜头时不会假装已经成片。
         </p>
         <div className="flex flex-wrap gap-3">
           <button

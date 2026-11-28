@@ -624,3 +624,22 @@ export function downloadBlob(blob: Blob, filename: string) {
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
+
+export async function saveBlobToUserChoice(blob: Blob, filename: string) {
+  const picker = (globalThis as { showSaveFilePicker?: (options: {
+    suggestedName?: string
+    types?: Array<{ description?: string; accept: Record<string, string[]> }>
+  }) => Promise<{ name?: string; createWritable: () => Promise<{ write: (data: Blob) => Promise<void>; close: () => Promise<void> }> }> }).showSaveFilePicker;
+  if (typeof picker === 'function') {
+    const handle = await picker({
+      suggestedName: filename,
+      types: [{ description: 'MP4 video', accept: { 'video/mp4': ['.mp4'] } }],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return { method: 'picker' as const, filename: handle.name || filename };
+  }
+  downloadBlob(blob, filename);
+  return { method: 'download' as const, filename };
+}

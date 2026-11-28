@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { runEpisodeDirector } from '@/core/drama/episode-run';
+import { describeLocalStorage, recordEpisodeRender, renderAssembledEpisode } from '@/core/drama/assemble-episode';
+import { loadLatestRun } from '@/core/drama/director-persist';
+import { runAssembleEpisodeOnly, runEpisodeDirector } from '@/core/drama/episode-run';
 import {
   ensureDramaSettings,
   loadDramaDraft,
@@ -18,7 +20,13 @@ async function GET({ params }: { params: { projectId: string } }) {
   const found = await getProject({ projectId: params.projectId });
   if (!found) return Response.json({ error: '找不到项目' }, { status: 404 });
   const draft = await loadDramaDraft(params.projectId);
-  return Response.json({ draft });
+  const run = await loadLatestRun(params.projectId);
+  return Response.json({
+    draft,
+    steps: run?.steps ?? [],
+    runStatus: run?.status ?? null,
+    storage: describeLocalStorage(),
+  });
 }
 
 async function readPayload(request: Request) {
@@ -75,7 +83,39 @@ async function POST({
     if (!started.ok) {
       return Response.json({ error: started.message }, { status: started.status });
     }
-    return Response.json(started.result);
+    return Response.json({ ...started.result, storage: describeLocalStorage() });
+  }
+
+  if (payload.action === 'assemble-episode') {
+    const started = await runAssembleEpisodeOnly({ projectId: params.projectId });
+    if (!started.ok) {
+      return Response.json({ error: started.message }, { status: started.status });
+    }
+    return Response.json({ ...started.result, storage: describeLocalStorage() });
+  }
+
+  if (payload.action === 'export-episode') {
+    const exported = await renderAssembledEpisode({ projectId: params.projectId });
+    if (!exported.ok) {
+      return Response.json(
+        { error: exported.message, clientExportRequired: exported.clientExportRequired === true },
+        { status: 400 }
+      );
+    }
+    return Response.json(exported);
+  }
+
+  if (payload.action === 'record-episode-render') {
+    const assetId = typeof payload.assetId === 'string' ? payload.assetId : '';
+    const publicUrl = typeof payload.publicUrl === 'string' ? payload.publicUrl : '';
+    if (!assetId) return Response.json({ error: '缺少成片素材' }, { status: 400 });
+    const recorded = await recordEpisodeRender({
+      projectId: params.projectId,
+      assetId,
+      publicUrl,
+    });
+    if (!recorded.ok) return Response.json({ error: recorded.message }, { status: 400 });
+    return Response.json(recorded);
   }
 
   const saved = await saveDramaDraft(params.projectId, {

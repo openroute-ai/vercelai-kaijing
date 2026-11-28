@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { ProjectPackageBar } from '@/components/kaijing/project-package-bar';
 import { BeatApiProductShell } from '@/components/marketing/beatapi-product-shell';
+import { selectEpisodeExportDocument } from '@/core/drama/assemble-plan';
+import { exportTimelineMp4, inspectLocalMedia, saveBlobToUserChoice } from '@/core/editor/media-export';
+import type { TimelineDocument } from '@/core/editor/timeline-document';
+import { uploadLocalProjectAsset } from '@/core/workspace-lib/app/local-project-asset-client';
 import { apiJsonGet, apiJsonPost } from '@/lib/api-client';
 import { getLocale } from '@/core/workspace-lib/shims/next-intl-server';
 import {
@@ -74,6 +78,8 @@ function DramaEditorPage() {
   const [runMessage, setRunMessage] = useState('');
   const [session, setSession] = useState<KaijingSession | null>(null);
   const [characters, setCharacters] = useState<Array<{ name: string; description: string; assetId?: string | null }>>([]);
+  const [storageMessage, setStorageMessage] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   function applyDraft(draft: Draft) {
     if (draft.settings) {
@@ -99,16 +105,25 @@ function DramaEditorPage() {
   async function load() {
     setStatus('正在读取本机稿…');
     try {
-      const data = await apiJsonGet<{ draft: Draft | null; error?: string }>(
-        `/api/app/projects/${projectId}/drama`
-      );
+      const data = await apiJsonGet<{
+        draft: Draft | null
+        error?: string
+        steps?: StepState[]
+        storage?: { dataRoot?: string; message?: string }
+      }>(`/api/app/projects/${projectId}/drama`);
       if (!data.draft) {
         setMissing(true);
         setStatus('找不到项目。');
         return;
       }
       applyDraft(data.draft);
-      setStatus(data.draft.script ? `已打开第 ${data.draft.script.revision} 稿` : '还没有剧本，写下后保存');
+      if (data.steps?.length) setSteps(data.steps);
+      if (data.storage?.message) setStorageMessage(data.storage.message);
+      setStatus(
+        data.draft.script
+          ? `已打开第 ${data.draft.script.revision} 稿。稿件在这台电脑上。`
+          : '还没有剧本，写下后保存到这台电脑'
+      );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : '读取失败');
     }
@@ -172,6 +187,84 @@ function DramaEditorPage() {
     }
   }
 
+  async function retryAssemble() {
+    setRunMessage('正在重试铺轨…');
+    try {
+      const data = await apiJsonPost<{ steps: StepState[]; message: string; draft: Draft }>(
+        `/api/app/projects/${projectId}/drama`,
+        { action: 'assemble-episode' }
+      );
+      if (data.draft) applyDraft(data.draft);
+      setSteps(data.steps ?? []);
+      setRunMessage(data.message);
+    } catch (error) {
+      setRunMessage(error instanceof Error ? error.message : '铺轨失败');
+    }
+  }
+
+  async function exportEpisode() {
+    setExporting(true);
+    setRunMessage('正在导出整集 MP4…');
+    try {
+      const timelinePayload = await apiJsonGet<{
+        timeline: { document: TimelineDocument; version: number } | null
+      }>(`/api/app/projects/${projectId}/timeline`);
+      const source = timelinePayload.timeline?.document;
+      if (!source) throw new Error('还没有时间线，不能导出成片。');
+      const document = selectEpisodeExportDocument(source);
+      const blob = await exportTimelineMp4({ document });
+      const filename = `${(document.name || '成片').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80)}-成片.mp4`;
+      const saved = await saveBlobToUserChoice(blob, filename);
+      const file = new File([blob], filename, { type: 'video/mp4' });
+      const meta = await inspectLocalMedia(file).catch(() => null);
+      const asset = await uploadLocalProjectAsset({
+        projectId,
+        file,
+        assetClass: 'derived',
+        width: meta?.width ?? undefined,
+        height: meta?.height ?? undefined,
+        durationMs: document.duration * 1000,
+        metadata: { operation: 'episode_render', timelineId: document.id },
+      });
+      await apiJsonPost(`/api/app/projects/${projectId}/drama`, {
+        action: 'record-episode-render',
+        assetId: asset.id,
+        publicUrl: asset.publicUrl,
+      });
+      setRunMessage(
+        saved.method === 'picker'
+          ? `整集 MP4 已保存到你选择的位置（${saved.filename}），并在这台电脑的项目目录里留了一份本机副本。`
+          : `整集 MP4 已开始下载（${saved.filename}）。浏览器会把它放到默认下载目录；同时这台电脑的项目目录里也留了一份本机副本。`
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setRunMessage('已取消选择保存位置。');
+        return;
+      }
+      try {
+        const fallback = await apiJsonPost<{
+          message?: string
+          asset?: { localPath?: string; filename?: string; publicUrl?: string }
+          error?: string
+          clientExportRequired?: boolean
+        }>(`/api/app/projects/${projectId}/drama`, { action: 'export-episode' });
+        if (fallback.asset?.localPath || fallback.message) {
+          setRunMessage(fallback.message || `整集已写到这台电脑：${fallback.asset?.localPath}`);
+          return;
+        }
+        throw new Error(fallback.error || '导出失败');
+      } catch (nested) {
+        setRunMessage(
+          error instanceof Error
+            ? `导出失败：${error.message}${nested instanceof Error && nested.message !== error.message ? `；${nested.message}` : ''}`
+            : '导出失败'
+        );
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function queueBackup() {
     try {
       const data = await apiJsonPost<{ draft: Draft }>(
@@ -210,7 +303,7 @@ function DramaEditorPage() {
         </p>
         <h1 className="text-3xl font-semibold">做一集</h1>
         <p className="text-sm leading-6 text-white/70">
-          项目保存在这台电脑上。画面比例创建后不能再改。「做一集」会写回剧本和分镜，再经开镜薄云调用 OpenRoute 生成形象和视频。没有真实结果时不会假装出片，失败步骤可单独重试。
+          项目和成片都默认保存在这台电脑上，云端不会自动存这份 MP4。画面比例创建后不能再改。「做一集」会写回剧本和分镜，经开镜薄云生成形象和视频；镜头都就绪后会自动按顺序铺进时间线，并用分镜里已有的对白做字幕。没有真实镜头时不会假装成片。铺轨失败可只重试这一步。整集 MP4 请再选一个保存位置导出。
         </p>
         <ProjectPackageBar projectId={projectId} />
 
@@ -366,8 +459,33 @@ function DramaEditorPage() {
               type="button"
               onClick={() => void makeEpisode()}
             >
-              {steps.some((step) => step.state === 'failed') ? '重试失败步骤' : '做一集'}
+              {steps.some(
+                (step) =>
+                  step.id !== 'assemble_episode' &&
+                  (step.state === 'failed' || step.state === 'needs_login' || step.state === 'needs_credits')
+              )
+                ? '重试失败步骤'
+                : '做一集'}
             </button>
+            {steps.some((step) => step.id === 'assemble_episode' && (step.state === 'failed' || step.state === 'blocked')) ? (
+              <button
+                className="rounded-md border border-white/30 px-4 py-2 text-sm"
+                type="button"
+                onClick={() => void retryAssemble()}
+              >
+                重试铺轨
+              </button>
+            ) : null}
+            {steps.some((step) => step.id === 'assemble_episode' && step.state === 'complete') ? (
+              <button
+                className="rounded-md border border-white/30 px-4 py-2 text-sm"
+                type="button"
+                disabled={exporting}
+                onClick={() => void exportEpisode()}
+              >
+                {exporting ? '正在导出…' : '导出整集 MP4'}
+              </button>
+            ) : null}
           </div>
         </form>
 
@@ -386,6 +504,7 @@ function DramaEditorPage() {
         ) : null}
         <p className="text-sm text-white/80">{status}</p>
         {runMessage ? <p className="text-sm leading-6 text-white/80">{runMessage}</p> : null}
+        {storageMessage ? <p className="text-sm leading-6 text-white/60">{storageMessage}</p> : null}
 
         {steps.length ? (
           <ol className="flex flex-col gap-2">
@@ -427,7 +546,7 @@ function DramaEditorPage() {
 
         <div className="flex flex-wrap gap-4 text-sm text-white/70">
           <a href={`/canvas/${projectId}`}>在画布上查看</a>
-          <a href={`/editor/${projectId}`}>打开时间线</a>
+          <a href={`/editor/${projectId}`}>打开本机时间线</a>
           <a href={`/studio/${projectId}`}>打开创作台</a>
           <a href={`/projects`}>项目与导出</a>
         </div>
